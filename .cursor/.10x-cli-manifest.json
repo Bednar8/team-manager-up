@@ -2,7 +2,7 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.22.0",
   "manifestVersion": 3,
-  "lastApplied": "2026-09-20T19:20:17.992Z",
+  "lastApplied": "2026-09-21T10:13:52.220Z",
   "lessonId": "m1l3",
   "course": "10xdevs4",
   "tool": "cursor",
@@ -134,7 +134,7 @@
   },
   "lessons": {
     "m1l1": {
-      "appliedAt": "2026-09-14T17:12:42.987Z",
+      "appliedAt": "2026-09-21T10:13:19.485Z",
       "skills": {
         "10x-idea-check": {
           "files": [
@@ -170,11 +170,11 @@
         "courseRules": true,
         "rules": true
       },
-      "installedReleaseId": "r-01931641e2446d2c391ae2a5580585d7b137173dca2b63b9a85ed32388155a66",
-      "installedManifestHash": "1ec3800cfa5c5d37754debba7e9172f32e71330ee1a29531d6ec8fff1c4bfaaa"
+      "installedReleaseId": "r-dd5c2b4bc3f63fee918d09330c676f31479453b6f6754ca1c13902646d33baca",
+      "installedManifestHash": "f22f7bf334f0e79bf8b7f095943940825d772c1c39d3613ae7d8531f4803c37f"
     },
     "m1l2": {
-      "appliedAt": "2026-09-20T18:31:03.454Z",
+      "appliedAt": "2026-09-21T10:13:30.373Z",
       "skills": {
         "10x-idea-check": {
           "files": [
@@ -234,11 +234,11 @@
         "courseRules": true,
         "rules": true
       },
-      "installedReleaseId": "r-bb966331f61ba11099572806d34f61a5db162db67d7dffb45ce857dcf451e6db",
-      "installedManifestHash": "58d8aa56d4fa6ba059114862e7c5c755bd69bb701ee4abb06c138c747a89ba00"
+      "installedReleaseId": "r-dd5c2b4bc3f63fee918d09330c676f31479453b6f6754ca1c13902646d33baca",
+      "installedManifestHash": "f22f7bf334f0e79bf8b7f095943940825d772c1c39d3613ae7d8531f4803c37f"
     },
     "m1l3": {
-      "appliedAt": "2026-09-20T19:20:17.992Z",
+      "appliedAt": "2026-09-21T10:13:52.220Z",
       "skills": {
         "10x-idea-check": {
           "files": [
@@ -316,8 +316,8 @@
         "courseRules": true,
         "rules": true
       },
-      "installedReleaseId": "r-c22c5cb120c2f7466dbb3377c4719639d40f75dc0d223ffb9c961aad7ab91af5",
-      "installedManifestHash": "b07a20b33c43f751ab13ae011d810589fc1987048885e6ef587221092a6f06a6"
+      "installedReleaseId": "r-dd5c2b4bc3f63fee918d09330c676f31479453b6f6754ca1c13902646d33baca",
+      "installedManifestHash": "f22f7bf334f0e79bf8b7f095943940825d772c1c39d3613ae7d8531f4803c37f"
     }
   },
   "managedRules": {

@@ -1,0 +1,25 @@
+{
+  "terminalAllowlist": [
+    "npm",
+    "npx",
+    "node",
+    "git add",
+    "git commit",
+    "git diff",
+    "git log",
+    "git status",
+    "git branch",
+    "git checkout",
+    "git stash"
+  ],
+  "autoRun": {
+    "allow_instructions": [
+      "Allow npm, npx, node, and local git read/write commands like add, commit, diff, log, status, branch, checkout, stash."
+    ],
+    "block_instructions": [
+      "Ask before curl, wget, or any network download.",
+      "Ask before git push.",
+      "Never auto-run rm -rf or other destructive deletes."
+    ]
+  }
+}
