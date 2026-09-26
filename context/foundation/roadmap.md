@@ -43,7 +43,7 @@ Publikacja rankingu jest zablokowana, dopóki nie zostanie zsynchronizowana hist
 
 | ID   | Change ID                 | Outcome (user can …)                                                                         | Prerequisites | PRD refs                                      | Status   |
 | ---- | ------------------------- | -------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------- | -------- |
-| F-01 | team-role-for-one-squad   | (foundation) konto ma rolę trenera albo zawodnika w jednym zespole                           | —             | Access Control                                | in-progress |
+| F-01 | team-role-for-one-squad   | (foundation) konto ma rolę trenera albo zawodnika w jednym zespole                           | —             | Access Control                                | done        |
 | S-01 | coach-upcoming-training   | trener dodaje, poprawia opis albo usuwa przyszły trening, a zalogowana osoba widzi kalendarz | F-01          | FR-001, FR-002, FR-003, FR-004, FR-005, US-01 | proposed |
 | S-02 | athlete-joins-with-code   | zawodnik dołącza do zespołu kodem od trenera                                                 | F-01          | US-01                                         | proposed |
 | S-03 | photo-readout-confirm     | zawodnik wgrywa jedno zdjęcie w dniu treningu, widzi odczyt i potwierdza dane                | S-01, S-02    | FR-005, FR-006, FR-007, FR-013, US-01         | proposed |
@@ -76,7 +76,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Stoi na początku, bo trener i zawodnik mają widzieć różne akcje. Bez tego S-01 i S-02 nie da się planować obok siebie, a każda z nich musiałaby na nowo ustalać, kto jest kim.
-- **Status:** in-progress
+- **Status:** done
 
 ## Slices
 
@@ -187,4 +187,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Done
 
-(Pusty. Wpisy dopisuje archiwizacja zmian.)
+- **F-01: (foundation) zalogowane konto jest albo trenerem, który zakłada jeden zespół, albo zawodnikiem tego zespołu; istniejące logowanie zostaje bez zmian.** — Archived 2026-09-26 → `context/archive/2026-09-26-team-role-for-one-squad/`. Lesson: —.
