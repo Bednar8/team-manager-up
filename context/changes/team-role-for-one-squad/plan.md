@@ -248,20 +248,20 @@ Deleting an auth user cascades to their membership and, when they are `created_b
 
 #### Manual
 
-- [x] 1.2 Two auth users can each create one team, and the same user cannot create a second
-- [x] 1.3 A request without a signed-in user cannot read `teams` or `team_members`
-- [x] 1.4 Inserting a membership with role `athlete` is rejected
+- [x] 1.2 Two auth users can each create one team, and the same user cannot create a second — 559893b
+- [x] 1.3 A request without a signed-in user cannot read `teams` or `team_members` — 559893b
+- [x] 1.4 Inserting a membership with role `athlete` is rejected — 559893b
 
 ### Phase 2: Create-team gate and dashboard
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 `npm run build` passes
-- [x] 2.3 `npm run smoke` passes, including the redirect from `/dashboard` to `/team/new` and the create that then renders `/dashboard`
+- [x] 2.1 `npm run lint` passes — 559893b
+- [x] 2.2 `npm run build` passes — 559893b
+- [x] 2.3 `npm run smoke` passes, including the redirect from `/dashboard` to `/team/new` and the create that then renders `/dashboard` — 559893b
 
 #### Manual
 
-- [x] 2.4 A new account opens `/dashboard`, lands on the create-team form, submits a name and a team name, and the dashboard shows that name, Coach, and the team name
-- [x] 2.5 An empty or too-long name stays on the form with an error, and an existing coach who opens `/team/new` returns to `/dashboard`
-- [x] 2.6 A second coach account creates a different team, and the UI has no team list or switcher
+- [x] 2.4 A new account opens `/dashboard`, lands on the create-team form, submits a name and a team name, and the dashboard shows that name, Coach, and the team name — 559893b
+- [x] 2.5 An empty or too-long name stays on the form with an error, and an existing coach who opens `/team/new` returns to `/dashboard` — 559893b
+- [x] 2.6 A second coach account creates a different team, and the UI has no team list or switcher — 559893b

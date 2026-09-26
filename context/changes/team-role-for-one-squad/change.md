@@ -1,7 +1,7 @@
 ---
 change_id: team-role-for-one-squad
 title: Team role for one squad
-status: implementing
+status: implemented
 created: 2026-09-26
 updated: 2026-09-26
 archived_at: null
