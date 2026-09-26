@@ -78,6 +78,7 @@ const scriptsConfig = defineConfig({
 });
 
 export default defineConfig(
+  { ignores: [".cursor/skills/**"] },
   includeIgnoreFile(gitignorePath),
   baseConfig,
   reactConfig,

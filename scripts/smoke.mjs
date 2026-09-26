@@ -4,6 +4,8 @@
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:4321";
 const email = `smoke-${Date.now()}@example.com`;
 const password = "Smoke-Test-Passw0rd!";
+const displayName = "Smoke Coach";
+const teamName = "Smoke Squad";
 const jar = new Map();
 
 function cookieHeader() {
@@ -32,7 +34,8 @@ async function request(path, { method = "GET", form } = {}) {
     body: form ? new URLSearchParams(form).toString() : undefined,
   });
   storeCookies(response);
-  return { status: response.status, location: response.headers.get("location") ?? "" };
+  const body = await response.text();
+  return { status: response.status, location: response.headers.get("location") ?? "", body };
 }
 
 const steps = [
@@ -53,7 +56,35 @@ const steps = [
     () => request("/api/auth/signin", { method: "POST", form: { email, password } }),
     { status: 302, location: "/" },
   ],
-  ["dashboard renders for signed-in user", () => request("/dashboard"), { status: 200 }],
+  [
+    "dashboard redirects signed-in user without team",
+    () => request("/dashboard"),
+    { status: 302, location: "/team/new" },
+  ],
+  ["create-team page renders", () => request("/team/new"), { status: 200 }],
+  [
+    "create team",
+    () =>
+      request("/api/team", {
+        method: "POST",
+        form: { team_name: teamName, display_name: displayName },
+      }),
+    { status: 302, location: "/dashboard" },
+  ],
+  [
+    "dashboard shows team",
+    () => request("/dashboard"),
+    { status: 200, bodyIncludes: [displayName, "Coach", teamName] },
+  ],
+  [
+    "second create team redirects to dashboard",
+    () =>
+      request("/api/team", {
+        method: "POST",
+        form: { team_name: "Another Squad", display_name: "Another Coach" },
+      }),
+    { status: 302, location: "/dashboard" },
+  ],
   ["signout clears session", () => request("/api/auth/signout", { method: "POST" }), { status: 302, location: "/" }],
   ["dashboard redirects after signout", () => request("/dashboard"), { status: 302, location: "/auth/signin" }],
 ];
@@ -61,13 +92,16 @@ const steps = [
 let failed = 0;
 for (const [name, run, expected] of steps) {
   const actual = await run();
-  const ok =
-    actual.status === expected.status &&
-    (expected.location === undefined || actual.location.startsWith(expected.location));
+  const locationOk = expected.location === undefined || actual.location.startsWith(expected.location);
+  const bodyOk = expected.bodyIncludes === undefined || expected.bodyIncludes.every((s) => actual.body.includes(s));
+  const ok = actual.status === expected.status && locationOk && bodyOk;
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}  -> ${actual.status} ${actual.location}`);
   if (!ok) {
     failed++;
     console.log(`      expected ${expected.status} ${expected.location ?? ""}`);
+    if (expected.bodyIncludes && !bodyOk) {
+      console.log(`      expected body to include ${JSON.stringify(expected.bodyIncludes)}`);
+    }
   }
 }
 

@@ -1,7 +1,45 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
 
 const { user } = Astro.locals;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+if (!supabase || !user) {
+  throw new Error("Dashboard requires a signed-in membership");
+}
+
+const { data: membership, error: membershipError } = await supabase
+  .from("team_members")
+  .select("display_name, team_id")
+  .eq("user_id", user.id)
+  .single();
+
+if (membershipError) {
+  throw membershipError;
+}
+
+const displayName = readString(membership, "display_name");
+const teamId = readString(membership, "team_id");
+
+const { data: team, error: teamError } = await supabase.from("teams").select("name").eq("id", teamId).single();
+
+if (teamError) {
+  throw teamError;
+}
+
+const teamName = readString(team, "name");
+
+function readString(row: unknown, key: string): string {
+  if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
+    throw new Error("Could not load team");
+  }
+  const value: unknown = Object.getOwnPropertyDescriptor(row, key)?.value;
+  if (typeof value !== "string") {
+    throw new Error("Could not load team");
+  }
+  return value;
+}
 ---
 
 <Layout title="Dashboard">
@@ -11,9 +49,10 @@ const { user } = Astro.locals;
         Dashboard
       </h1>
       <p class="text-blue-100/80">
-        Welcome, <span class="font-semibold text-white">{user?.email}</span>
+        <span class="font-semibold text-white">{displayName}</span>
       </p>
-      <p class="mt-2 text-sm text-blue-100/50">This page is only for authenticated users.</p>
+      <p class="mt-2 text-sm text-blue-100/80">Coach</p>
+      <p class="mt-2 text-sm text-blue-100/50">{teamName}</p>
       <form method="POST" action="/api/auth/signout" class="mt-6">
         <button
           type="submit"
