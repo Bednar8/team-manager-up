@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "10x-astro-starter",
+  "name": "team-manager",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2026-05-08",
   "compatibility_flags": ["nodejs_compat"],
@@ -11,5 +11,8 @@
   },
   "observability": {
     "enabled": true,
+  },
+  "secrets": {
+    "required": ["SUPABASE_URL", "SUPABASE_KEY"],
   },
 }

@@ -151,21 +151,28 @@ Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_
 
 ## Deployment
 
-This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/).
+This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) (`team-manager` in `wrangler.jsonc`), not Cloudflare Pages. A green GitHub Actions run on `master` lints and builds only; it does not publish the Worker.
 
-1. Build the project:
+Production URL: `https://team-manager.p-bednarski9907.workers.dev`.
 
-```bash
-npm run build
-```
-
-2. Deploy with Wrangler:
+1. Build, then deploy. Do not pass `--env`; this repo has no named Wrangler environments.
 
 ```bash
-npx wrangler deploy
+npm run build && npx wrangler deploy
 ```
 
-Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or via `npx wrangler secret put`.
+2. After the Worker exists, set the hosted Supabase values (not `127.0.0.1`, and the publishable key, not the service role):
+
+```bash
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_KEY
+```
+
+`wrangler secret put` publishes a new version of the current script, so a second build is not required for the secret to take effect. Local copies stay in gitignored `.env` and `.dev.vars`. GitHub Actions secrets of the same names are only for the CI build.
+
+Turn on Workers Paid before athletes upload real photos. The free plan allows 10 ms of CPU per invocation. Ranking cron is not part of this deploy; the default Astro entry only serves HTTP.
+
+In the hosted Supabase project, set Authentication → URL Configuration so confirmation mail returns to the Worker: Site URL and Redirect URLs = `https://team-manager.p-bednarski9907.workers.dev`. `supabase/config.toml` only affects the local stack.
 
 ## Smoke test
 
