@@ -45,7 +45,7 @@ Publikacja rankingu jest zablokowana, dopóki nie zostanie zsynchronizowana hist
 | ---- | ------------------------- | -------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------- | -------- |
 | F-01 | team-role-for-one-squad   | (foundation) konto ma rolę trenera albo zawodnika w jednym zespole                           | —             | Access Control                                | done        |
 | S-01 | coach-upcoming-training   | trener dodaje, poprawia opis albo usuwa przyszły trening, a zalogowana osoba widzi kalendarz | F-01          | FR-001, FR-002, FR-003, FR-004, FR-005, US-01 | proposed |
-| S-02 | athlete-joins-with-code   | zawodnik dołącza do zespołu kodem od trenera                                                 | F-01          | US-01                                         | proposed |
+| S-02 | athlete-joins-with-code   | zawodnik dołącza do zespołu kodem od trenera                                                 | F-01          | US-01                                         | in-progress |
 | S-03 | photo-readout-confirm     | zawodnik wgrywa jedno zdjęcie w dniu treningu, widzi odczyt i potwierdza dane                | S-01, S-02    | FR-005, FR-006, FR-007, FR-013, US-01         | proposed |
 | S-04 | km-ranking-publication    | trener i zawodnik widzą ranking po kilometrach, z 0 km bez zgłoszenia                        | S-03          | FR-010, FR-011, FR-014, US-01                 | blocked  |
 | S-05 | coach-sees-submissions    | trener widzi, kto oddał zdjęcie, a kto nie, i może podejrzeć przesłane                       | S-03          | FR-008, US-01                                 | proposed |
@@ -102,7 +102,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** US-01 zakłada zespół z zawodnikami, a Access Control wskazuje kod od trenera i oznacza to jako nie zablokowane. Skład musi istnieć, zanim da się pokazać, kto nie oddał zdjęcia i kto ma 0 km.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-03: Zdjęcie, odczyt i potwierdzenie
 
