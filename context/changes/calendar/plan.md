@@ -188,9 +188,9 @@ No schema change and no backfill. Existing accounts see the grid as soon as the 
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 `npm run build` passes
-- [x] 1.3 `npm run smoke` passes, including the anonymous redirect from `/calendar` and a body that contains `Kalendarz`
+- [x] 1.1 `npm run lint` passes — b75b073
+- [x] 1.2 `npm run build` passes — b75b073
+- [x] 1.3 `npm run smoke` passes, including the anonymous redirect from `/calendar` and a body that contains `Kalendarz` — b75b073
 
 #### Manual
 
@@ -202,9 +202,9 @@ No schema change and no backfill. Existing accounts see the grid as soon as the 
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 `npm run build` passes
-- [x] 2.3 `npm run smoke` passes, including the anonymous redirect from `/calendar` and a body that contains `Kalendarz`
+- [x] 2.1 `npm run lint` passes — b75b073
+- [x] 2.2 `npm run build` passes — b75b073
+- [x] 2.3 `npm run smoke` passes, including the anonymous redirect from `/calendar` and a body that contains `Kalendarz` — b75b073
 
 #### Manual
 

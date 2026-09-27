@@ -1,7 +1,7 @@
 ---
 change_id: calendar
 title: Miesięczny kalendarz do klikania na desktopie i telefonie
-status: implementing
+status: implemented
 created: 2026-09-27
 updated: 2026-09-27
 archived_at: null
