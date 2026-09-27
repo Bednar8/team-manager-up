@@ -1,10 +1,10 @@
 ---
 change_id: athlete-joins-with-code
 title: Athlete joins with code
-status: implemented
+status: archived
 created: 2026-09-26
 updated: 2026-09-27
-archived_at: null
+archived_at: 2026-09-27T10:46:07Z
 ---
 
 ## Notes
