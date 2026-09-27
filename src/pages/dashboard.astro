@@ -28,17 +28,19 @@ if (role !== "coach" && role !== "athlete") {
 
 const { data: squad, error: squadError } = await supabase
   .from("team_members")
-  .select("id, display_name, role")
+  .select("id, display_name, role, created_at")
   .eq("team_id", teamId);
 
 if (squadError) {
   throw squadError;
 }
 
-const members = readMembers(squad).sort((a, b) => {
-  if (a.role !== b.role) return a.role === "coach" ? -1 : 1;
-  return a.displayName.localeCompare(b.displayName, "pl") || a.id.localeCompare(b.id);
-});
+const members = readMembers(squad).sort(
+  (a, b) =>
+    a.displayName.localeCompare(b.displayName, "pl") ||
+    a.createdAt.localeCompare(b.createdAt) ||
+    a.id.localeCompare(b.id),
+);
 
 const { data: codeRow, error: codeError } = await supabase
   .from("team_join_codes")
@@ -63,7 +65,9 @@ function readString(row: unknown, key: string): string {
   return value;
 }
 
-function readMembers(rows: unknown): { id: string; displayName: string; role: "coach" | "athlete" }[] {
+function readMembers(
+  rows: unknown,
+): { id: string; displayName: string; role: "coach" | "athlete"; createdAt: string }[] {
   if (!Array.isArray(rows)) {
     throw new Error("Could not load team");
   }
@@ -76,6 +80,7 @@ function readMembers(rows: unknown): { id: string; displayName: string; role: "c
       id: readString(row, "id"),
       displayName: readString(row, "display_name"),
       role: memberRole,
+      createdAt: readString(row, "created_at"),
     };
   });
 }
