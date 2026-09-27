@@ -294,22 +294,22 @@ Deleting an auth user still cascades to their membership and, when they are `cre
 
 #### Manual
 
-- [x] 2.4 A signed-in account with no team opens `/dashboard`, sees Coach and Athlete, and a reload shows that choice again
-- [x] 2.5 The coach submits Name and surname plus a team name and lands on the dashboard as Coach
-- [x] 2.6 The athlete submits Name and surname plus a valid code and `/dashboard` returns 200 instead of redirecting to `/team/new`
-- [x] 2.7 A failed submit returns to the choice with an error, and sign-in itself still returns to `/`
+- [x] 2.4 A signed-in account with no team opens `/dashboard`, sees Coach and Athlete, and a reload shows that choice again — 0a11c3c
+- [x] 2.5 The coach submits Name and surname plus a team name and lands on the dashboard as Coach — 0a11c3c
+- [x] 2.6 The athlete submits Name and surname plus a valid code and `/dashboard` returns 200 instead of redirecting to `/team/new` — 0a11c3c
+- [x] 2.7 A failed submit returns to the choice with an error, and sign-in itself still returns to `/` — 0a11c3c
 
 ### Phase 3: Dashboard roster and coach code
 
 #### Automated
 
-- [x] 3.1 `npm run lint` passes
-- [x] 3.2 `npm run build` passes
-- [x] 3.3 `npm run smoke` passes, including a second account that fails a wrong code and then joins, and both dashboards show both display names
+- [x] 3.1 `npm run lint` passes — 0a11c3c
+- [x] 3.2 `npm run build` passes — 0a11c3c
+- [x] 3.3 `npm run smoke` passes, including a second account that fails a wrong code and then joins, and both dashboards show both display names — 0a11c3c
 
 #### Manual
 
-- [x] 3.4 Anna's dashboard shows her name, Coach, `KS Bieg`, the code, and a squad list that includes her
-- [x] 3.5 Bartek's dashboard shows Athlete, `KS Bieg`, and the same names, and does not show the code
-- [x] 3.6 Replacing the code asks for confirmation first; after confirmation the dashboard shows a different code and Bartek is still on the team
-- [x] 3.7 A second athlete named Anna Kowalska appears as a second row
+- [x] 3.4 Anna's dashboard shows her name, Coach, `KS Bieg`, the code, and a squad list that includes her — 0a11c3c
+- [x] 3.5 Bartek's dashboard shows Athlete, `KS Bieg`, and the same names, and does not show the code — 0a11c3c
+- [x] 3.6 Replacing the code asks for confirmation first; after confirmation the dashboard shows a different code and Bartek is still on the team — 0a11c3c
+- [x] 3.7 A second athlete named Anna Kowalska appears as a second row — 0a11c3c
