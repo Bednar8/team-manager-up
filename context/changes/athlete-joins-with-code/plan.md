@@ -274,23 +274,23 @@ Deleting an auth user still cascades to their membership and, when they are `cre
 
 #### Automated
 
-- [x] 1.1 `npx supabase db reset` applies `supabase/migrations/*_athlete_joins_with_code.sql` and exits 0
+- [x] 1.1 `npx supabase db reset` applies `supabase/migrations/*_athlete_joins_with_code.sql` and exits 0 — 1930adc
 
 #### Manual
 
-- [x] 1.2 A signed-in account with no team joins an existing team with its code and gets role `athlete`
-- [x] 1.3 A code that does not match creates no membership
-- [x] 1.4 After the coach replaces the code, the old code does not join and the existing members are still on the team
-- [x] 1.5 A member can read every display name on their team; an athlete cannot read the join code
-- [x] 1.6 Two athletes who submit the same display name both join
+- [x] 1.2 A signed-in account with no team joins an existing team with its code and gets role `athlete` — 1930adc
+- [x] 1.3 A code that does not match creates no membership — 1930adc
+- [x] 1.4 After the coach replaces the code, the old code does not join and the existing members are still on the team — 1930adc
+- [x] 1.5 A member can read every display name on their team; an athlete cannot read the join code — 1930adc
+- [x] 1.6 Two athletes who submit the same display name both join — 1930adc
 
 ### Phase 2: Who-are-you gate and join
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 `npm run build` passes
-- [ ] 2.3 `npm run smoke` passes, and sign-in still redirects to `/`
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 `npm run build` passes
+- [x] 2.3 `npm run smoke` passes, and sign-in still redirects to `/`
 
 #### Manual
 

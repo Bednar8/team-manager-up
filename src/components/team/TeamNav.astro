@@ -1,0 +1,49 @@
+---
+interface Props {
+  viewer: {
+    displayName: string;
+    teamName: string;
+    roleLabel: string;
+  };
+  pathname: string;
+}
+
+const { viewer, pathname } = Astro.props;
+const onTeam = pathname.startsWith("/dashboard");
+const onCalendar = pathname.startsWith("/calendar");
+const onRanking = pathname.startsWith("/ranking");
+
+const linkClass = "rounded-md px-3 py-2 text-sm font-medium hover:bg-sidebar-accent";
+const currentLinkClass = "bg-sidebar-accent text-sidebar-accent-foreground";
+---
+
+<nav aria-label="Aplikacja" class="flex h-full min-h-full flex-col p-4">
+  <div class="flex flex-col gap-1">
+    <a
+      href="/dashboard"
+      aria-current={onTeam ? "page" : undefined}
+      class:list={[linkClass, onTeam && currentLinkClass]}
+    >
+      Zespół
+    </a>
+    <a
+      href="/calendar"
+      aria-current={onCalendar ? "page" : undefined}
+      class:list={[linkClass, onCalendar && currentLinkClass]}
+    >
+      Kalendarz
+    </a>
+    <a
+      href="/ranking"
+      aria-current={onRanking ? "page" : undefined}
+      class:list={[linkClass, onRanking && currentLinkClass]}
+    >
+      Ranking
+    </a>
+  </div>
+  <div class="mt-auto border-t px-3 pt-4">
+    <p class="font-semibold">{viewer.displayName}</p>
+    <p class="mt-1 text-sm text-muted-foreground">{viewer.teamName}</p>
+    <p class="mt-1 text-sm text-muted-foreground">{viewer.roleLabel}</p>
+  </div>
+</nav>

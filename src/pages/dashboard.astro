@@ -1,5 +1,5 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import TeamShell from "@/layouts/TeamShell.astro";
 import { createClient } from "@/lib/supabase";
 
 const { user } = Astro.locals;
@@ -11,7 +11,7 @@ if (!supabase || !user) {
 
 const { data: membership, error: membershipError } = await supabase
   .from("team_members")
-  .select("display_name, team_id")
+  .select("role, team_id")
   .eq("user_id", user.id)
   .single();
 
@@ -19,16 +19,38 @@ if (membershipError) {
   throw membershipError;
 }
 
-const displayName = readString(membership, "display_name");
+const role = readString(membership, "role");
 const teamId = readString(membership, "team_id");
 
-const { data: team, error: teamError } = await supabase.from("teams").select("name").eq("id", teamId).single();
-
-if (teamError) {
-  throw teamError;
+if (role !== "coach" && role !== "athlete") {
+  throw new Error("Could not load team");
 }
 
-const teamName = readString(team, "name");
+const { data: squad, error: squadError } = await supabase
+  .from("team_members")
+  .select("id, display_name, role")
+  .eq("team_id", teamId);
+
+if (squadError) {
+  throw squadError;
+}
+
+const members = readMembers(squad).sort((a, b) => {
+  if (a.role !== b.role) return a.role === "coach" ? -1 : 1;
+  return a.displayName.localeCompare(b.displayName, "pl") || a.id.localeCompare(b.id);
+});
+
+const { data: codeRow, error: codeError } = await supabase
+  .from("team_join_codes")
+  .select("code")
+  .eq("team_id", teamId)
+  .maybeSingle();
+
+if (codeError) {
+  throw codeError;
+}
+
+const joinCode = role === "coach" && codeRow ? readString(codeRow, "code") : null;
 
 function readString(row: unknown, key: string): string {
   if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
@@ -40,27 +62,54 @@ function readString(row: unknown, key: string): string {
   }
   return value;
 }
+
+function readMembers(rows: unknown): { id: string; displayName: string; role: "coach" | "athlete" }[] {
+  if (!Array.isArray(rows)) {
+    throw new Error("Could not load team");
+  }
+  return rows.map((row) => {
+    const memberRole = readString(row, "role");
+    if (memberRole !== "coach" && memberRole !== "athlete") {
+      throw new Error("Could not load team");
+    }
+    return {
+      id: readString(row, "id"),
+      displayName: readString(row, "display_name"),
+      role: memberRole,
+    };
+  });
+}
 ---
 
-<Layout title="Dashboard">
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
-      <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-        Dashboard
-      </h1>
-      <p class="text-blue-100/80">
-        <span class="font-semibold text-white">{displayName}</span>
-      </p>
-      <p class="mt-2 text-sm text-blue-100/80">Coach</p>
-      <p class="mt-2 text-sm text-blue-100/50">{teamName}</p>
-      <form method="POST" action="/api/auth/signout" class="mt-6">
-        <button
-          type="submit"
-          class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
-        >
-          Sign out
-        </button>
-      </form>
+<TeamShell title="Zespół">
+  <main class="flex-1 px-4 py-8">
+    <div class="mx-auto w-full max-w-md">
+      <h1 class="text-3xl font-semibold">Zespół</h1>
+      {joinCode && (
+        <div class="mt-6">
+          <p class="font-mono text-sm tracking-widest" data-team-code={joinCode}>
+            {joinCode}
+          </p>
+          <a href="/team/code" class="mt-2 inline-block text-sm font-medium text-primary underline">
+            Wymień kod
+          </a>
+        </div>
+      )}
+      <ul class="mt-6 space-y-2">
+        {members.map((member) =>
+          member.role === "coach" ? (
+            <li class="rounded-md bg-accent px-4 py-3">
+              <p class="font-semibold">{member.displayName}</p>
+              <p class="text-sm text-accent-foreground">Trener</p>
+            </li>
+          ) : (
+            <li class="rounded-md px-4 py-3">
+              <p class="font-medium">{member.displayName}</p>
+              <p class="text-sm text-muted-foreground">Zawodnik</p>
+            </li>
+          ),
+        )}
+      </ul>
     </div>
-  </div>
-</Layout>
+  </main>
+</TeamShell>

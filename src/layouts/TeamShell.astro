@@ -1,0 +1,117 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import TeamNav from "@/components/team/TeamNav.astro";
+import { createClient } from "@/lib/supabase";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const { user } = Astro.locals;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const pathname = Astro.url.pathname;
+
+if (!supabase || !user) {
+  throw new Error("Could not load team");
+}
+
+const { data: membership, error: membershipError } = await supabase
+  .from("team_members")
+  .select("display_name, role, team_id")
+  .eq("user_id", user.id)
+  .single();
+
+if (membershipError) {
+  throw membershipError;
+}
+
+const displayName = readString(membership, "display_name");
+const role = readString(membership, "role");
+const teamId = readString(membership, "team_id");
+const roleLabel = role === "coach" ? "Trener" : role === "athlete" ? "Zawodnik" : null;
+
+if (!roleLabel) {
+  throw new Error("Could not load team");
+}
+
+const { data: team, error: teamError } = await supabase.from("teams").select("name").eq("id", teamId).single();
+
+if (teamError) {
+  throw teamError;
+}
+
+const viewer = {
+  displayName,
+  teamName: readString(team, "name"),
+  roleLabel,
+};
+
+function readString(row: unknown, key: string): string {
+  if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
+    throw new Error("Could not load team");
+  }
+  const value: unknown = Object.getOwnPropertyDescriptor(row, key)?.value;
+  if (typeof value !== "string") {
+    throw new Error("Could not load team");
+  }
+  return value;
+}
+---
+
+<Layout title={title}>
+  <div class="flex min-h-0 flex-1">
+    <aside class="hidden w-64 shrink-0 border-r bg-sidebar lg:flex lg:flex-col">
+      <TeamNav viewer={viewer} pathname={pathname} />
+    </aside>
+    <div class="flex min-w-0 flex-1 flex-col">
+      <div class="border-b px-4 py-2 lg:hidden">
+        <button type="button" id="open-team-nav" class="text-sm font-medium text-primary">
+          Menu
+        </button>
+      </div>
+      <slot />
+    </div>
+  </div>
+  <dialog id="team-nav" aria-label="Nawigacja">
+    <div class="flex items-center justify-end border-b px-3 py-2">
+      <button type="button" id="close-team-nav" class="text-sm font-medium text-primary">
+        Zamknij
+      </button>
+    </div>
+    <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <TeamNav viewer={viewer} pathname={pathname} />
+    </div>
+  </dialog>
+</Layout>
+
+<script>
+  const dialog = document.getElementById("team-nav");
+  const openButton = document.getElementById("open-team-nav");
+  const closeButton = document.getElementById("close-team-nav");
+
+  openButton?.addEventListener("click", () => {
+    if (dialog instanceof HTMLDialogElement) dialog.showModal();
+  });
+
+  closeButton?.addEventListener("click", () => {
+    if (dialog instanceof HTMLDialogElement) dialog.close();
+  });
+
+  dialog?.addEventListener("click", (event) => {
+    if (!(dialog instanceof HTMLDialogElement) || event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    const inside =
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom;
+    if (!inside) dialog.close();
+  });
+
+  dialog?.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (dialog instanceof HTMLDialogElement) dialog.close();
+    });
+  });
+</script>

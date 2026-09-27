@@ -1,0 +1,78 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
+
+const { user } = Astro.locals;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+if (!supabase || !user) {
+  throw new Error("Replace code requires a signed-in coach");
+}
+
+const { data: membership, error: membershipError } = await supabase
+  .from("team_members")
+  .select("role, team_id")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+if (membershipError) {
+  throw membershipError;
+}
+
+if (!membership || readString(membership, "role") !== "coach") {
+  throw new Error("Replace code requires a signed-in coach");
+}
+
+const teamId = readString(membership, "team_id");
+
+const { data: codeRow, error: codeError } = await supabase
+  .from("team_join_codes")
+  .select("code")
+  .eq("team_id", teamId)
+  .maybeSingle();
+
+if (codeError) {
+  throw codeError;
+}
+
+if (!codeRow) {
+  throw new Error("Could not load team");
+}
+
+const code = readString(codeRow, "code");
+const error = Astro.url.searchParams.get("error");
+
+function readString(row: unknown, key: string): string {
+  if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
+    throw new Error("Could not load team");
+  }
+  const value: unknown = Object.getOwnPropertyDescriptor(row, key)?.value;
+  if (typeof value !== "string") {
+    throw new Error("Could not load team");
+  }
+  return value;
+}
+---
+
+<Layout title="Wymień kod">
+  <main class="flex flex-1 items-center justify-center px-4 py-10">
+    <div class="w-full max-w-sm rounded-xl border bg-card p-8 text-center shadow-sm">
+      <h1 class="mb-6 text-2xl font-semibold">Wymień kod</h1>
+      {error && (
+        <p class="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <p class="text-sm text-muted-foreground">Obecny kod przestanie działać. Osoby już w zespole zostają.</p>
+      <p class="mt-4 font-mono text-sm tracking-widest">{code}</p>
+      <form method="POST" action="/api/team/code" class="mt-6">
+        <button
+          type="submit"
+          class="h-10 w-full rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Potwierdź
+        </button>
+      </form>
+    </div>
+  </main>
+</Layout>
