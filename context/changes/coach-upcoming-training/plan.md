@@ -223,12 +223,12 @@ Nie ma istniejących wierszy treningów do przeniesienia. Nowa tabela i funkcje.
 
 #### Automated
 
-- [x] 2.1 `npm run lint` przechodzi
-- [x] 2.2 `npm run build` przechodzi
+- [x] 2.1 `npm run lint` przechodzi — 0e03f96
+- [x] 2.2 `npm run build` przechodzi — 0e03f96
 
 #### Manual
 
-- [x] 2.3 Trener dodaje trening na dziś: w komórce jest ikona, od szerokości lg także napis „trening”, poniżej lg sama ikona
-- [x] 2.4 Trener poprawia opis i usuwa trening na dziś lub w przyszłości; na dniu minionym nie ma tych akcji, jest opis albo informacja, że treningu nie było
-- [x] 2.5 Zawodnik widzi tę samą ikonę i czyta opis, bez dodawania, edycji i usuwania
-- [x] 2.6 Pusty dzień przyszły u trenera pokazuje formularz; pusty dzień miniony pokazuje „Tego dnia nie było treningu.” bez formularza
+- [x] 2.3 Trener dodaje trening na dziś: w komórce jest ikona, od szerokości lg także napis „trening”, poniżej lg sama ikona — 0e03f96
+- [x] 2.4 Trener poprawia opis i usuwa trening na dziś lub w przyszłości; na dniu minionym nie ma tych akcji, jest opis albo informacja, że treningu nie było — 0e03f96
+- [x] 2.5 Zawodnik widzi tę samą ikonę i czyta opis, bez dodawania, edycji i usuwania — 0e03f96
+- [x] 2.6 Pusty dzień przyszły u trenera pokazuje formularz; pusty dzień miniony pokazuje „Tego dnia nie było treningu.” bez formularza — 0e03f96
