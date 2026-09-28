@@ -105,3 +105,9 @@ export function civilMonthOf(civil: string): { year: number; month: number } | n
   if (!parts) return null;
   return { year: parts.year, month: parts.month };
 }
+
+/** True when `civil` is a real day strictly before `today`. Both values are YYYY-MM-DD. */
+export function isPastCivil(civil: string, today: string): boolean {
+  if (!parseCivilDate(civil) || !parseCivilDate(today)) return false;
+  return civil < today;
+}

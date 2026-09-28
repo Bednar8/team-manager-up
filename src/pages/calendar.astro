@@ -27,8 +27,22 @@ if (role !== "coach" && role !== "athlete") {
   throw new Error("Could not load team");
 }
 
+const { data: trainingRows, error: trainingsError } = await supabase
+  .from("trainings")
+  .select("training_on, description");
+
+if (trainingsError) {
+  throw trainingsError;
+}
+
+const trainings = trainingRows.map((row) => ({
+  trainingOn: readString(row, "training_on"),
+  description: readString(row, "description"),
+}));
+
 const dateParam = Astro.url.searchParams.get("date");
 const initialDate = dateParam && parseCivilDate(dateParam) ? dateParam : undefined;
+const error = Astro.url.searchParams.get("error") ?? undefined;
 
 function readString(row: unknown, key: string): string {
   if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
@@ -44,6 +58,6 @@ function readString(row: unknown, key: string): string {
 
 <TeamShell title="Kalendarz">
   <main class="flex min-h-[calc(100dvh-9rem)] flex-1 flex-col px-3 py-4 lg:min-h-[calc(100dvh-6rem)] lg:px-6">
-    <MonthCalendar initialDate={initialDate} role={role} client:load />
+    <MonthCalendar initialDate={initialDate} role={role} trainings={trainings} error={error} client:load />
   </main>
 </TeamShell>

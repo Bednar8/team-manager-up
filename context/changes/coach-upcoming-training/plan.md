@@ -212,12 +212,12 @@ Nie ma istniejących wierszy treningów do przeniesienia. Nowa tabela i funkcje.
 
 #### Automated
 
-- [x] 1.1 `npm run lint` przechodzi
-- [x] 1.2 `npm run build` przechodzi
+- [x] 1.1 `npm run lint` przechodzi — 9e633e5
+- [x] 1.2 `npm run build` przechodzi — 9e633e5
 
 #### Manual
 
-- [x] 1.3 Lokalna migracja aplikuje się przez `npx supabase db reset`, a funkcje odrzucają datę minioną, pusty opis i drugi trening tego samego dnia oraz przyjmują zapis trenera na dziś
+- [x] 1.3 Lokalna migracja aplikuje się przez `npx supabase db reset`, a funkcje odrzucają datę minioną, pusty opis i drugi trening tego samego dnia oraz przyjmują zapis trenera na dziś — 9e633e5
 
 ### Phase 2: Kalendarz
 
@@ -228,7 +228,7 @@ Nie ma istniejących wierszy treningów do przeniesienia. Nowa tabela i funkcje.
 
 #### Manual
 
-- [ ] 2.3 Trener dodaje trening na dziś: w komórce jest ikona, od szerokości lg także napis „trening”, poniżej lg sama ikona
-- [ ] 2.4 Trener poprawia opis i usuwa trening na dziś lub w przyszłości; na dniu minionym nie ma tych akcji, jest opis albo informacja, że treningu nie było
-- [ ] 2.5 Zawodnik widzi tę samą ikonę i czyta opis, bez dodawania, edycji i usuwania
-- [ ] 2.6 Pusty dzień przyszły u trenera pokazuje formularz; pusty dzień miniony pokazuje „Tego dnia nie było treningu.” bez formularza
+- [x] 2.3 Trener dodaje trening na dziś: w komórce jest ikona, od szerokości lg także napis „trening”, poniżej lg sama ikona
+- [x] 2.4 Trener poprawia opis i usuwa trening na dziś lub w przyszłości; na dniu minionym nie ma tych akcji, jest opis albo informacja, że treningu nie było
+- [x] 2.5 Zawodnik widzi tę samą ikonę i czyta opis, bez dodawania, edycji i usuwania
+- [x] 2.6 Pusty dzień przyszły u trenera pokazuje formularz; pusty dzień miniony pokazuje „Tego dnia nie było treningu.” bez formularza
