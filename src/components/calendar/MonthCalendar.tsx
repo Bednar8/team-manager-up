@@ -158,6 +158,11 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
 
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3">
+      {notice && !selected ? (
+        <p className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-sm">
+          {notice}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="min-h-8 text-xl font-semibold sm:text-2xl">
           {visible ? formatMonthHeading(visible.year, visible.month) : "\u00a0"}
@@ -213,7 +218,6 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
                 const dayNumber = Number(civil.slice(8, 10));
                 const inMonth = civil.startsWith(visibleMonthPrefix);
                 const isToday = today !== null && civil === today;
-                const isPast = today !== null && isPastCivil(civil, today);
                 const isSelected = selected === civil;
                 const hasTraining = trainingByDate.has(civil);
                 const dayLabel = hasTraining ? `${formatDayTitle(civil)}, trening` : formatDayTitle(civil);
@@ -231,7 +235,7 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
                     }}
                     className={cn(
                       "flex h-full min-h-24 w-full flex-col items-start rounded-xl border p-2 text-left tabular-nums transition-colors sm:min-h-28 sm:p-3",
-                      inMonth && !isPast
+                      inMonth
                         ? "bg-card text-foreground hover:bg-accent"
                         : "bg-muted text-muted-foreground hover:bg-muted/70",
                       isToday && !isSelected && "ring-primary ring-2 ring-inset",
