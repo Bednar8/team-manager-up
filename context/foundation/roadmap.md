@@ -3,7 +3,7 @@ project: "Team Manager"
 version: 1
 status: draft
 created: 2026-09-26
-updated: 2026-09-28
+updated: 2026-10-01
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -44,7 +44,7 @@ Publikacja rankingu jest zablokowana, dopóki nie zostanie zsynchronizowana hist
 | ID   | Change ID                 | Outcome (user can …)                                                                         | Prerequisites | PRD refs                                      | Status   |
 | ---- | ------------------------- | -------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------- | -------- |
 | F-01 | team-role-for-one-squad   | (foundation) konto ma rolę trenera albo zawodnika w jednym zespole                           | —             | Access Control                                | done        |
-| S-01 | coach-upcoming-training   | trener dodaje, poprawia opis albo usuwa przyszły trening, a zalogowana osoba widzi kalendarz | F-01          | FR-001, FR-002, FR-003, FR-004, FR-005, US-01 | in-progress |
+| S-01 | coach-upcoming-training   | trener dodaje, poprawia opis albo usuwa przyszły trening, a zalogowana osoba widzi kalendarz | F-01          | FR-001, FR-002, FR-003, FR-004, FR-005, US-01 | done |
 | S-02 | athlete-joins-with-code   | zawodnik dołącza do zespołu kodem od trenera                                                 | F-01          | US-01                                         | done |
 | S-03 | photo-readout-confirm     | zawodnik wgrywa jedno zdjęcie w dniu treningu, widzi odczyt i potwierdza dane                | S-01, S-02    | FR-005, FR-006, FR-007, FR-013, US-01         | proposed |
 | S-04 | km-ranking-publication    | trener i zawodnik widzą ranking po kilometrach, z 0 km bez zgłoszenia                        | S-03          | FR-010, FR-011, FR-014, US-01                 | blocked  |
@@ -90,7 +90,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Jeden zestaw reguł daty (brak wstecz, jeden trening na dzień, edycja i usuwanie tylko przyszłych) musi być spójny, inaczej obecność i ranking rozjadą się już na starcie. Wgrywanie zdjęcia jest dopiero w S-03; tu kalendarz tylko pokazuje, gdzie trening jest.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: Dołączenie kodem trenera
 
@@ -189,3 +189,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **F-01: (foundation) zalogowane konto jest albo trenerem, który zakłada jeden zespół, albo zawodnikiem tego zespołu; istniejące logowanie zostaje bez zmian.** — Archived 2026-09-26 → `context/archive/2026-09-26-team-role-for-one-squad/`. Lesson: —.
 - **S-02: zawodnik może dołączyć do zespołu kodem od trenera, a trener widzi skład zespołu.** — Archived 2026-09-27 → `context/archive/2026-09-26-athlete-joins-with-code/`. Lesson: —.
+- **S-01: trener może dodać trening (data + krótki opis) bez daty wstecznej i bez drugiego treningu tego samego dnia, zmienić opis albo usunąć go tylko gdy data jest przyszła, a zalogowana osoba widzi kalendarz, w tym dni bez treningu.** — Archived 2026-10-01 → `context/archive/2026-09-28-coach-upcoming-training/`. Lesson: —.

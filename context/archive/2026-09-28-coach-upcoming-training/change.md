@@ -1,10 +1,10 @@
 ---
 change_id: coach-upcoming-training
 title: Coach upcoming training
-status: impl_reviewed
+status: archived
 created: 2026-09-28
-updated: 2026-09-28
-archived_at: null
+updated: 2026-10-01
+archived_at: 2026-10-01T16:48:52Z
 ---
 
 ## Notes
