@@ -43,6 +43,18 @@ const trainings = trainingRows.map((row) => ({
 const dateParam = Astro.url.searchParams.get("date");
 const initialDate = dateParam && parseCivilDate(dateParam) ? dateParam : undefined;
 const error = Astro.url.searchParams.get("error") ?? undefined;
+const warsawToday = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Warsaw",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(new Date());
+
+if (!parseCivilDate(warsawToday)) {
+  throw new Error("Could not load team");
+}
+
+const submission = role === "athlete" && initialDate ? await loadSubmission(supabase, user.id, initialDate) : null;
 
 function readString(row: unknown, key: string): string {
   if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
@@ -54,10 +66,115 @@ function readString(row: unknown, key: string): string {
   }
   return value;
 }
+
+async function loadSubmission(client: NonNullable<typeof supabase>, userId: string, trainingOn: string) {
+  const { data: trainingRow, error: trainingError } = await client
+    .from("trainings")
+    .select("id")
+    .eq("training_on", trainingOn)
+    .maybeSingle();
+
+  if (trainingError) {
+    throw trainingError;
+  }
+  if (!trainingRow) {
+    return null;
+  }
+
+  const { data: submissionRow, error: submissionError } = await client
+    .from("training_submissions")
+    .select(
+      "distance_km, duration_seconds, max_speed_kmh, model_distance_km, model_duration_seconds, model_max_speed_kmh, athlete_edited, confirmed_at",
+    )
+    .eq("training_id", readString(trainingRow, "id"))
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (submissionError) {
+    throw submissionError;
+  }
+  if (!submissionRow) {
+    return null;
+  }
+
+  return {
+    distanceKm: readNullableNumber(submissionRow, "distance_km"),
+    durationSeconds: readNullableInteger(submissionRow, "duration_seconds"),
+    maxSpeedKmh: readNullableNumber(submissionRow, "max_speed_kmh"),
+    modelDistanceKm: readNullableNumber(submissionRow, "model_distance_km"),
+    modelDurationSeconds: readNullableInteger(submissionRow, "model_duration_seconds"),
+    modelMaxSpeedKmh: readNullableNumber(submissionRow, "model_max_speed_kmh"),
+    athleteEdited: readBoolean(submissionRow, "athlete_edited"),
+    confirmedAt: readNullableString(submissionRow, "confirmed_at"),
+  };
+}
+
+function readOwn(row: unknown, key: string): unknown {
+  if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
+    throw new Error("Could not load team");
+  }
+  return Object.getOwnPropertyDescriptor(row, key)?.value;
+}
+
+function readNullableNumber(row: unknown, key: string): number | null {
+  const value = readOwn(row, key);
+  if (value === null) {
+    return null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  throw new Error("Could not load team");
+}
+
+function readNullableInteger(row: unknown, key: string): number | null {
+  const value = readNullableNumber(row, key);
+  if (value === null) {
+    return null;
+  }
+  if (!Number.isInteger(value)) {
+    throw new Error("Could not load team");
+  }
+  return value;
+}
+
+function readBoolean(row: unknown, key: string): boolean {
+  const value = readOwn(row, key);
+  if (typeof value !== "boolean") {
+    throw new Error("Could not load team");
+  }
+  return value;
+}
+
+function readNullableString(row: unknown, key: string): string | null {
+  const value = readOwn(row, key);
+  if (value === null) {
+    return null;
+  }
+  if (typeof value !== "string") {
+    throw new Error("Could not load team");
+  }
+  return value;
+}
 ---
 
 <TeamShell title="Kalendarz">
   <main class="flex min-h-[calc(100dvh-9rem)] flex-1 flex-col px-3 py-4 lg:min-h-[calc(100dvh-6rem)] lg:px-6">
-    <MonthCalendar initialDate={initialDate} role={role} trainings={trainings} error={error} client:load />
+    <MonthCalendar
+      initialDate={initialDate}
+      warsawToday={warsawToday}
+      role={role}
+      trainings={trainings}
+      submission={submission}
+      submissionDate={role === "athlete" ? (initialDate ?? null) : null}
+      error={error}
+      client:load
+    />
   </main>
 </TeamShell>

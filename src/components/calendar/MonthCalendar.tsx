@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Footprints } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { parseDecimalInput, parseDurationInput } from "@/lib/training-photo-input";
 import { cn } from "@/lib/utils";
 import {
   WEEKDAY_LABELS_FULL,
@@ -20,15 +21,65 @@ interface Training {
   description: string;
 }
 
+interface Submission {
+  distanceKm: number | null;
+  durationSeconds: number | null;
+  maxSpeedKmh: number | null;
+  modelDistanceKm: number | null;
+  modelDurationSeconds: number | null;
+  modelMaxSpeedKmh: number | null;
+  athleteEdited: boolean;
+  confirmedAt: string | null;
+}
+
+interface PhotoAttempt {
+  date: string;
+  status: "reading" | "failed" | "ready";
+  message: string | null;
+  values: Submission | null;
+  /** True after `begin` succeeded and cleared the previous readout. */
+  cleared: boolean;
+}
+
 interface Props {
   initialDate?: string;
+  warsawToday: string;
   role: "coach" | "athlete";
   trainings: Training[];
+  submission: Submission | null;
+  submissionDate: string | null;
   error?: string;
 }
 
 const textareaClassName =
   "border-input focus:ring-ring w-full rounded-lg border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2";
+
+const fieldClassName =
+  "border-input bg-background text-foreground w-full min-w-0 rounded-lg border px-3 py-2 tabular-nums read-only:bg-muted/40";
+
+const fileClassName =
+  "text-foreground w-full max-w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground";
+
+const READOUT_FAILED = "Nie udało się odczytać zdjęcia. Wpisz dane albo wgraj inne.";
+const UPLOAD_FAILED = "Nie udało się wgrać zdjęcia.";
+const CONFIRM_FAILED = "Nie udało się potwierdzić.";
+const COACH_SEES_EDIT = "Trener zobaczy, że poprawiłeś odczyt.";
+
+const EMPTY_SUBMISSION: Submission = {
+  distanceKm: null,
+  durationSeconds: null,
+  maxSpeedKmh: null,
+  modelDistanceKm: null,
+  modelDurationSeconds: null,
+  modelMaxSpeedKmh: null,
+  athleteEdited: false,
+  confirmedAt: null,
+};
+
+const decimalFormat = new Intl.NumberFormat("pl-PL", {
+  maximumFractionDigits: 2,
+  useGrouping: false,
+});
 
 function localTodayCivil(): string {
   const now = new Date();
@@ -46,7 +97,15 @@ function todayOnServer(): null {
   return null;
 }
 
-export default function MonthCalendar({ initialDate, role, trainings, error }: Props) {
+export default function MonthCalendar({
+  initialDate,
+  warsawToday,
+  role,
+  trainings,
+  submission,
+  submissionDate,
+  error,
+}: Props) {
   const initialParts = initialDate ? parseCivilDate(initialDate) : null;
   const today = useSyncExternalStore(subscribeToToday, localTodayCivil, todayOnServer);
   const [paged, setPaged] = useState<{ year: number; month: number } | null>(() =>
@@ -56,6 +115,12 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
     initialParts ? formatCivilDate(initialParts.year, initialParts.month, initialParts.day) : null,
   );
   const [notice, setNotice] = useState<string | null>(() => error ?? null);
+  const [photo, setPhoto] = useState<PhotoAttempt | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const photoAttempt = useRef(0);
+  const confirmAttempt = useRef(0);
+  const confirmLock = useRef(false);
   const entryDate = initialDate ?? null;
   const visible = paged ?? (today ? civilMonthOf(today) : null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -69,6 +134,9 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
     if (!month) return;
     setPaged(month);
     setSelected(civil);
+    confirmAttempt.current += 1;
+    setConfirming(false);
+    setConfirmError(null);
     if (civil !== entryDate) setNotice(null);
     const url = new URL(window.location.href);
     url.searchParams.set("date", civil);
@@ -107,6 +175,9 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
       const param = new URL(window.location.href).searchParams.get("date");
       const parts = param ? parseCivilDate(param) : null;
       pushedRef.current = false;
+      confirmAttempt.current += 1;
+      setConfirming(false);
+      setConfirmError(null);
       if (param && parts) {
         setSelected(param);
         setPaged({ year: parts.year, month: parts.month });
@@ -134,6 +205,128 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
     if (lastDayRef.current) document.getElementById(`day-${lastDayRef.current}`)?.focus();
   }, [selected]);
 
+  function onPhotoSelected(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.item(0) ?? null;
+    event.currentTarget.value = "";
+    if (!file || !selected) return;
+    void runPhotoReadout(selected, file);
+  }
+
+  async function runPhotoReadout(day: string, file: File) {
+    const attempt = photoAttempt.current + 1;
+    photoAttempt.current = attempt;
+    let cleared = false;
+    setConfirmError(null);
+    setPhoto({ date: day, status: "reading", message: null, values: null, cleared: false });
+
+    try {
+      const beginResponse = await fetch("/api/trainings/photo/begin", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ training_on: day }),
+      });
+      const beginBody: unknown = await beginResponse.json().catch(() => null);
+      if (photoAttempt.current !== attempt) return;
+      if (!beginResponse.ok) {
+        setPhoto({
+          date: day,
+          status: "failed",
+          message: readErrorMessage(beginBody) ?? UPLOAD_FAILED,
+          values: null,
+          cleared: readCleared(beginBody),
+        });
+        return;
+      }
+      const signedUrl = readSignedUrl(beginBody);
+      if (!signedUrl) {
+        setPhoto({ date: day, status: "failed", message: UPLOAD_FAILED, values: null, cleared: true });
+        return;
+      }
+
+      cleared = true;
+      setPhoto({ date: day, status: "reading", message: null, values: null, cleared: true });
+      const uploaded = await uploadTrainingPhoto(signedUrl, file);
+      if (photoAttempt.current !== attempt) return;
+      if (!uploaded) {
+        setPhoto({ date: day, status: "failed", message: UPLOAD_FAILED, values: null, cleared: true });
+        return;
+      }
+
+      const readoutResponse = await fetch("/api/trainings/photo/readout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ training_on: day }),
+      });
+      const readoutBody: unknown = await readoutResponse.json().catch(() => null);
+      if (photoAttempt.current !== attempt) return;
+      if (readoutResponse.status === 503) {
+        setPhoto({
+          date: day,
+          status: "failed",
+          message: readErrorMessage(readoutBody) ?? READOUT_FAILED,
+          values: null,
+          cleared: true,
+        });
+        return;
+      }
+      const values = readoutResponse.ok ? readSubmission(readoutBody) : null;
+      if (!values) {
+        setPhoto({ date: day, status: "failed", message: READOUT_FAILED, values: null, cleared: true });
+        return;
+      }
+      setPhoto({ date: day, status: "ready", message: null, values, cleared: true });
+    } catch {
+      if (photoAttempt.current !== attempt) return;
+      setPhoto({
+        date: day,
+        status: "failed",
+        message: cleared ? READOUT_FAILED : UPLOAD_FAILED,
+        values: null,
+        cleared,
+      });
+    }
+  }
+
+  async function confirmPhoto(day: string, draft: PhotoDraft) {
+    if (confirmLock.current) return;
+    confirmLock.current = true;
+    const attempt = confirmAttempt.current + 1;
+    confirmAttempt.current = attempt;
+    setConfirming(true);
+    setConfirmError(null);
+
+    try {
+      const response = await fetch("/api/trainings/photo/confirm", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          training_on: day,
+          distance_km: draft.distance,
+          duration_seconds: draft.duration,
+          max_speed_kmh: draft.speed,
+        }),
+      });
+      const body: unknown = await response.json().catch(() => null);
+      if (!response.ok) {
+        if (confirmAttempt.current === attempt) {
+          setConfirmError(readErrorMessage(body) ?? CONFIRM_FAILED);
+        }
+        return;
+      }
+      const values = readSubmission(body);
+      if (!values?.confirmedAt) {
+        if (confirmAttempt.current === attempt) setConfirmError(CONFIRM_FAILED);
+        return;
+      }
+      setPhoto({ date: day, status: "ready", message: null, values, cleared: true });
+    } catch {
+      if (confirmAttempt.current === attempt) setConfirmError(CONFIRM_FAILED);
+    } finally {
+      confirmLock.current = false;
+      if (confirmAttempt.current === attempt) setConfirming(false);
+    }
+  }
+
   function onDialogClick(event: React.MouseEvent<HTMLDialogElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
     const inside =
@@ -155,6 +348,22 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
   const todayKnown = today !== null;
   const selectedIsPast = todayKnown && selected !== null && isPastCivil(selected, today);
   const coachCanWrite = role === "coach" && todayKnown && selected !== null && !selectedIsPast;
+  const athleteCanUpload = role === "athlete" && selectedHasTraining && selected === warsawToday;
+  const livePhoto = photo && selected && photo.date === selected ? photo : null;
+  const savedSubmission = submission && selected === submissionDate ? submission : null;
+  let shownSubmission: Submission | null = savedSubmission;
+  if (livePhoto?.status === "ready" && livePhoto.values) {
+    shownSubmission = livePhoto.values;
+  } else if (livePhoto?.status === "reading") {
+    shownSubmission = null;
+  } else if (livePhoto?.status === "failed" && livePhoto.cleared) {
+    shownSubmission = livePhoto.values ?? EMPTY_SUBMISSION;
+  } else if (livePhoto?.cleared) {
+    shownSubmission = null;
+  }
+  const photoReading = livePhoto?.status === "reading";
+  const photoMessage = livePhoto?.status === "failed" ? livePhoto.message : null;
+  const photoConfirmed = shownSubmission?.confirmedAt != null;
 
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3">
@@ -329,7 +538,48 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
               </div>
             ) : null}
 
-            {!coachCanWrite && selectedHasTraining ? (
+            {athleteCanUpload ? (
+              <div key={selected}>
+                <p className="mt-3 text-sm whitespace-pre-wrap">{selectedDescription}</p>
+                {photoConfirmed ? null : (
+                  <>
+                    <label htmlFor="training-photo" className="text-muted-foreground mt-4 mb-1 block text-sm">
+                      Zdjęcie
+                    </label>
+                    <input
+                      id="training-photo"
+                      type="file"
+                      accept="image/*"
+                      className={fileClassName}
+                      disabled={photoReading || confirming}
+                      onChange={onPhotoSelected}
+                    />
+                  </>
+                )}
+                {photoReading ? <p className="mt-3 text-sm">Odczyt trwa</p> : null}
+                {photoMessage ? <p className="text-destructive mt-3 text-sm">{photoMessage}</p> : null}
+                {shownSubmission ? (
+                  <PhotoFields
+                    key={photoFieldsKey(selected, shownSubmission)}
+                    values={shownSubmission}
+                    confirming={confirming}
+                    error={confirmError}
+                    onConfirm={(draft) => {
+                      void confirmPhoto(selected, draft);
+                    }}
+                    onClose={closePopup}
+                  />
+                ) : (
+                  <div className="mt-6 flex justify-end">
+                    <Button type="button" variant="outline" onClick={closePopup}>
+                      Zamknij
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {!coachCanWrite && selectedHasTraining && !athleteCanUpload ? (
               <>
                 <p className="mt-3 text-sm whitespace-pre-wrap">{selectedDescription}</p>
                 <div className="mt-6 flex justify-end">
@@ -365,4 +615,273 @@ export default function MonthCalendar({ initialDate, role, trainings, error }: P
       </dialog>
     </div>
   );
+}
+
+interface PhotoDraft {
+  distance: string;
+  duration: string;
+  speed: string;
+}
+
+function PhotoFields({
+  values,
+  confirming,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  values: Submission;
+  confirming: boolean;
+  error: string | null;
+  onConfirm: (draft: PhotoDraft) => void;
+  onClose: () => void;
+}) {
+  const confirmed = values.confirmedAt !== null;
+  const [distance, setDistance] = useState(() => formatDecimal(values.distanceKm));
+  const [duration, setDuration] = useState(() =>
+    values.durationSeconds === null ? "" : formatDuration(values.durationSeconds),
+  );
+  const [speed, setSpeed] = useState(() => formatDecimal(values.maxSpeedKmh));
+  const distanceValue = parseDecimalInput(distance);
+  const durationValue = parseDurationInput(duration);
+  const speedValue = parseDecimalInput(speed);
+  const canConfirm = typeof distanceValue === "number" && distanceValue > 0;
+  const edited =
+    !confirmed &&
+    (enteredDiffers(distanceValue, values.modelDistanceKm) ||
+      enteredDiffers(durationValue, values.modelDurationSeconds) ||
+      enteredDiffers(speedValue, values.modelMaxSpeedKmh));
+
+  return (
+    <div className="mt-4 flex flex-col gap-3">
+      <div>
+        <label htmlFor="photo-distance" className="text-muted-foreground mb-1 block text-sm">
+          Kilometry
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id="photo-distance"
+            inputMode="decimal"
+            readOnly={confirmed}
+            disabled={confirming}
+            value={distance}
+            onChange={(event) => {
+              setDistance(event.currentTarget.value);
+            }}
+            className={fieldClassName}
+          />
+          <span className="text-sm">km</span>
+        </div>
+      </div>
+      <div>
+        <label htmlFor="photo-duration" className="text-muted-foreground mb-1 block text-sm">
+          Czas
+        </label>
+        <input
+          id="photo-duration"
+          inputMode="numeric"
+          readOnly={confirmed}
+          disabled={confirming}
+          value={duration}
+          onChange={(event) => {
+            setDuration(event.currentTarget.value);
+          }}
+          className={fieldClassName}
+        />
+      </div>
+      <div>
+        <label htmlFor="photo-speed" className="text-muted-foreground mb-1 block text-sm">
+          Prędkość maksymalna
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id="photo-speed"
+            inputMode="decimal"
+            readOnly={confirmed}
+            disabled={confirming}
+            value={speed}
+            onChange={(event) => {
+              setSpeed(event.currentTarget.value);
+            }}
+            className={fieldClassName}
+          />
+          <span className="text-sm">km/h</span>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-col items-end gap-3">
+        {edited ? <p className="w-full text-sm">{COACH_SEES_EDIT}</p> : null}
+        {error ? <p className="text-destructive w-full text-sm">{error}</p> : null}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Zamknij
+          </Button>
+          {confirmed ? null : (
+            <Button
+              type="button"
+              disabled={!canConfirm || confirming}
+              onClick={() => {
+                onConfirm({ distance, duration, speed });
+              }}
+            >
+              Potwierdź
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatDecimal(value: number | null): string {
+  return value === null ? "" : decimalFormat.format(value);
+}
+
+function enteredDiffers(entered: number | null | undefined, model: number | null): boolean {
+  if (entered === undefined) {
+    return true;
+  }
+  return entered !== model;
+}
+
+function photoFieldsKey(day: string, values: Submission): string {
+  return [
+    day,
+    values.confirmedAt ?? "",
+    String(values.distanceKm),
+    String(values.durationSeconds),
+    String(values.maxSpeedKmh),
+    String(values.modelDistanceKm),
+    String(values.modelDurationSeconds),
+    String(values.modelMaxSpeedKmh),
+  ].join("|");
+}
+
+function formatDuration(totalSeconds: number): string {
+  const total = Math.max(0, Math.trunc(totalSeconds));
+  const seconds = total % 60;
+  const minutesTotal = Math.floor(total / 60);
+  if (minutesTotal >= 60) {
+    const hours = Math.floor(minutesTotal / 60);
+    const minutes = minutesTotal % 60;
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+  return `${minutesTotal}:${String(seconds).padStart(2, "0")}`;
+}
+
+async function uploadTrainingPhoto(signedUrl: string, file: File): Promise<boolean> {
+  const body = new FormData();
+  body.append("cacheControl", "3600");
+  body.append("", file);
+  const response = await fetch(signedUrl, {
+    method: "PUT",
+    body,
+  });
+  return response.ok;
+}
+
+function readSignedUrl(value: unknown): string | null {
+  if (typeof value !== "object" || value === null || !Object.hasOwn(value, "signedUrl")) {
+    return null;
+  }
+  const signedUrl: unknown = Object.getOwnPropertyDescriptor(value, "signedUrl")?.value;
+  return typeof signedUrl === "string" && signedUrl.length > 0 ? signedUrl : null;
+}
+
+function readCleared(value: unknown): boolean {
+  if (typeof value !== "object" || value === null || !Object.hasOwn(value, "cleared")) {
+    return false;
+  }
+  return Object.getOwnPropertyDescriptor(value, "cleared")?.value === true;
+}
+
+function readErrorMessage(value: unknown): string | null {
+  if (typeof value !== "object" || value === null || !Object.hasOwn(value, "error")) {
+    return null;
+  }
+  const message: unknown = Object.getOwnPropertyDescriptor(value, "error")?.value;
+  return typeof message === "string" && message.length > 0 ? message : null;
+}
+
+function readSubmission(value: unknown): Submission | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const distanceKm = readNullableNumber(value, "distanceKm");
+  const durationSeconds = readNullableInteger(value, "durationSeconds");
+  const maxSpeedKmh = readNullableNumber(value, "maxSpeedKmh");
+  const modelDistanceKm = readNullableNumber(value, "modelDistanceKm");
+  const modelDurationSeconds = readNullableInteger(value, "modelDurationSeconds");
+  const modelMaxSpeedKmh = readNullableNumber(value, "modelMaxSpeedKmh");
+  const athleteEdited = readBoolean(value, "athleteEdited");
+  const confirmedAt = readNullableString(value, "confirmedAt");
+  if (
+    distanceKm === undefined ||
+    durationSeconds === undefined ||
+    maxSpeedKmh === undefined ||
+    modelDistanceKm === undefined ||
+    modelDurationSeconds === undefined ||
+    modelMaxSpeedKmh === undefined ||
+    athleteEdited === undefined ||
+    confirmedAt === undefined
+  ) {
+    return null;
+  }
+  return {
+    distanceKm,
+    durationSeconds,
+    maxSpeedKmh,
+    modelDistanceKm,
+    modelDurationSeconds,
+    modelMaxSpeedKmh,
+    athleteEdited,
+    confirmedAt,
+  };
+}
+
+function readOwn(row: object, key: string): unknown {
+  if (!Object.hasOwn(row, key)) {
+    return undefined;
+  }
+  return Object.getOwnPropertyDescriptor(row, key)?.value;
+}
+
+function readNullableNumber(row: object, key: string): number | null | undefined {
+  if (!Object.hasOwn(row, key)) {
+    return undefined;
+  }
+  const value = readOwn(row, key);
+  if (value === null) {
+    return null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  return undefined;
+}
+
+function readNullableInteger(row: object, key: string): number | null | undefined {
+  const value = readNullableNumber(row, key);
+  if (value === null || value === undefined) {
+    return value;
+  }
+  return Number.isInteger(value) ? value : undefined;
+}
+
+function readBoolean(row: object, key: string): boolean | undefined {
+  if (!Object.hasOwn(row, key)) {
+    return undefined;
+  }
+  const value = readOwn(row, key);
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function readNullableString(row: object, key: string): string | null | undefined {
+  if (!Object.hasOwn(row, key)) {
+    return undefined;
+  }
+  const value = readOwn(row, key);
+  if (value === null) {
+    return null;
+  }
+  return typeof value === "string" ? value : undefined;
 }
