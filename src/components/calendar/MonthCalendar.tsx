@@ -32,6 +32,20 @@ interface Submission {
   confirmedAt: string | null;
 }
 
+export interface SquadAthlete {
+  userId: string;
+  displayName: string;
+  createdAt: string;
+  id: string;
+}
+
+export interface ConfirmedSubmission {
+  trainingOn: string;
+  userId: string;
+  displayName: string;
+  athleteEdited: boolean;
+}
+
 interface PhotoAttempt {
   date: string;
   status: "reading" | "failed" | "ready";
@@ -46,6 +60,8 @@ interface Props {
   warsawToday: string;
   role: "coach" | "athlete";
   trainings: Training[];
+  athletes: SquadAthlete[];
+  confirmedSubmissions: ConfirmedSubmission[];
   submission: Submission | null;
   submissionDate: string | null;
   error?: string;
@@ -102,6 +118,8 @@ export default function MonthCalendar({
   warsawToday,
   role,
   trainings,
+  athletes,
+  confirmedSubmissions,
   submission,
   submissionDate,
   error,
@@ -344,6 +362,10 @@ export default function MonthCalendar({
 
   const selectedDescription = selected ? trainingByDate.get(selected) : undefined;
   const selectedHasTraining = selectedDescription !== undefined;
+  const warsawTodayKnown = parseCivilDate(warsawToday) !== null;
+  const squadListVisible =
+    role === "coach" && selectedHasTraining && warsawTodayKnown && selected !== null && selected <= warsawToday;
+  const squadRows = squadListVisible && selected ? rowsForTrainingDay(selected, athletes, confirmedSubmissions) : [];
   const showNotice = Boolean(notice && selected && selected === entryDate);
   const todayKnown = today !== null;
   const selectedIsPast = todayKnown && selected !== null && isPastCivil(selected, today);
@@ -535,6 +557,7 @@ export default function MonthCalendar({
                     Usuń
                   </Button>
                 </form>
+                {squadListVisible ? <SquadDayList rows={squadRows} /> : null}
               </div>
             ) : null}
 
@@ -582,6 +605,7 @@ export default function MonthCalendar({
             {!coachCanWrite && selectedHasTraining && !athleteCanUpload ? (
               <>
                 <p className="mt-3 text-sm whitespace-pre-wrap">{selectedDescription}</p>
+                {squadListVisible ? <SquadDayList rows={squadRows} /> : null}
                 <div className="mt-6 flex justify-end">
                   <Button type="button" variant="outline" onClick={closePopup}>
                     Zamknij
@@ -615,6 +639,77 @@ export default function MonthCalendar({
       </dialog>
     </div>
   );
+}
+
+interface SquadDayRow {
+  userId: string;
+  displayName: string;
+  createdAt: string | null;
+  submitted: boolean;
+}
+
+function SquadDayList({ rows }: { rows: SquadDayRow[] }) {
+  if (rows.length === 0) {
+    return <p className="text-muted-foreground mt-4 text-sm">W zespole nie ma zawodników.</p>;
+  }
+
+  return (
+    <ul className="mt-4 flex flex-col gap-1">
+      {rows.map((row) => (
+        <li key={row.userId} className="flex items-baseline justify-between gap-3 text-sm">
+          <span className="min-w-0 break-words">{row.displayName}</span>
+          <span className="shrink-0">{row.submitted ? "Oddał" : "Nie oddał"}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function rowsForTrainingDay(day: string, athletes: SquadAthlete[], submissions: ConfirmedSubmission[]): SquadDayRow[] {
+  const onSquad = new Set(athletes.map((athlete) => athlete.userId));
+  const submitted = new Set<string>();
+  const outside: ConfirmedSubmission[] = [];
+
+  for (const submission of submissions) {
+    if (submission.trainingOn !== day) continue;
+    if (onSquad.has(submission.userId)) {
+      submitted.add(submission.userId);
+      continue;
+    }
+    outside.push(submission);
+  }
+
+  const rows: SquadDayRow[] = athletes.map((athlete) => ({
+    userId: athlete.userId,
+    displayName: athlete.displayName,
+    createdAt: athlete.createdAt,
+    submitted: submitted.has(athlete.userId),
+  }));
+
+  const seenOutside = new Set<string>();
+  for (const submission of outside) {
+    if (seenOutside.has(submission.userId)) continue;
+    seenOutside.add(submission.userId);
+    rows.push({
+      userId: submission.userId,
+      displayName: submission.displayName,
+      createdAt: null,
+      submitted: true,
+    });
+  }
+
+  rows.sort(compareSquadRows);
+  return rows;
+}
+
+function compareSquadRows(a: SquadDayRow, b: SquadDayRow): number {
+  const byName = a.displayName.localeCompare(b.displayName, "pl");
+  if (byName !== 0) return byName;
+  if (a.createdAt !== null && b.createdAt !== null) {
+    const byCreated = a.createdAt.localeCompare(b.createdAt);
+    if (byCreated !== 0) return byCreated;
+  }
+  return a.userId.localeCompare(b.userId);
 }
 
 interface PhotoDraft {

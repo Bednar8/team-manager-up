@@ -230,27 +230,27 @@ Jeden zespół i mała liczba wierszy. Strona i tak ładuje wszystkie treningi. 
 
 #### Automated
 
-- [x] 1.1 `npx supabase db reset` stosuje migrację z polityką trenera, kolumną `submitter_display_name` i podmianą `confirm_training_photo`
-- [x] 1.2 `npm run lint` przechodzi
-- [x] 1.3 `npm run build` przechodzi
+- [x] 1.1 `npx supabase db reset` stosuje migrację z polityką trenera, kolumną `submitter_display_name` i podmianą `confirm_training_photo` — 27982e8
+- [x] 1.2 `npm run lint` przechodzi — 27982e8
+- [x] 1.3 `npm run build` przechodzi — 27982e8
 
 #### Manual
 
-- [x] 1.4 Potwierdzenie zapisuje w `submitter_display_name` aktualne `display_name` zawodnika; wiersz niepotwierdzony zostawia tę kolumnę pustą
-- [x] 1.5 Trener odczytuje potwierdzony wiersz swojego zespołu i nie odczytuje wiersza niepotwierdzonego ani wiersza innego zespołu; zawodnik nadal czyta tylko swój wiersz
+- [x] 1.4 Potwierdzenie zapisuje w `submitter_display_name` aktualne `display_name` zawodnika; wiersz niepotwierdzony zostawia tę kolumnę pustą — 27982e8
+- [x] 1.5 Trener odczytuje potwierdzony wiersz swojego zespołu i nie odczytuje wiersza niepotwierdzonego ani wiersza innego zespołu; zawodnik nadal czyta tylko swój wiersz — 27982e8
 
 ### Phase 2: Lista oddanych na dniu treningu
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` przechodzi
-- [ ] 2.2 `npm run build` przechodzi
+- [x] 2.1 `npm run lint` przechodzi
+- [x] 2.2 `npm run build` przechodzi
 
 #### Manual
 
-- [ ] 2.3 Dziś w Warszawie jest trening: jeden zawodnik potwierdził, drugi ma sam odczyt, trzeci nie zaczął. Trener widzi Oddał, Nie oddał i Nie oddał, w kolejności nazwisk jak na stronie zespołu, i nadal zapisuje opis
-- [ ] 2.4 Wczorajszy trening pokazuje opis i listę, bez formularza. Jutrzejszy trening zostaje przy formularzu, bez listy
-- [ ] 2.5 Zawodnik, który dołączył po wczoraj, jest na wczoraj jako Nie oddał. Osoba po potwierdzeniu poza składem jest jako Oddał pod zapisanym imieniem. Trenera nie ma na liście. Zawodnik nie widzi listy. Sam trener w zespole widzi „W zespole nie ma zawodników.”
+- [x] 2.3 Dziś w Warszawie jest trening: jeden zawodnik potwierdził, drugi ma sam odczyt, trzeci nie zaczął. Trener widzi Oddał, Nie oddał i Nie oddał, w kolejności nazwisk jak na stronie zespołu, i nadal zapisuje opis
+- [x] 2.4 Wczorajszy trening pokazuje opis i listę, bez formularza. Jutrzejszy trening zostaje przy formularzu, bez listy
+- [x] 2.5 Zawodnik, który dołączył po wczoraj, jest na wczoraj jako Nie oddał. Osoba po potwierdzeniu poza składem jest jako Oddał pod zapisanym imieniem. Trenera nie ma na liście. Zawodnik nie widzi listy. Sam trener w zespole widzi „W zespole nie ma zawodników.”
 
 ### Phase 3: Podgląd zdjęcia
 

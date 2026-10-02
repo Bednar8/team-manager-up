@@ -1,6 +1,6 @@
 ---
 import TeamShell from "@/layouts/TeamShell.astro";
-import MonthCalendar from "@/components/calendar/MonthCalendar";
+import MonthCalendar, { type ConfirmedSubmission, type SquadAthlete } from "@/components/calendar/MonthCalendar";
 import { parseCivilDate } from "@/components/calendar/month";
 import { createClient } from "@/lib/supabase";
 
@@ -39,6 +39,9 @@ const trainings = trainingRows.map((row) => ({
   trainingOn: readString(row, "training_on"),
   description: readString(row, "description"),
 }));
+
+const athletes: SquadAthlete[] = role === "coach" ? await loadSquadAthletes(supabase) : [];
+const confirmedSubmissions: ConfirmedSubmission[] = role === "coach" ? await loadConfirmedSubmissions(supabase) : [];
 
 const dateParam = Astro.url.searchParams.get("date");
 const initialDate = dateParam && parseCivilDate(dateParam) ? dateParam : undefined;
@@ -162,6 +165,64 @@ function readNullableString(row: unknown, key: string): string | null {
   }
   return value;
 }
+
+async function loadSquadAthletes(client: NonNullable<typeof supabase>) {
+  const { data, error } = await client
+    .from("team_members")
+    .select("user_id, display_name, created_at, id")
+    .eq("role", "athlete");
+
+  if (error) {
+    throw error;
+  }
+  if (!Array.isArray(data)) {
+    throw new Error("Could not load team");
+  }
+
+  return data.map((row) => ({
+    userId: readString(row, "user_id"),
+    displayName: readString(row, "display_name"),
+    createdAt: readString(row, "created_at"),
+    id: readString(row, "id"),
+  }));
+}
+
+async function loadConfirmedSubmissions(client: NonNullable<typeof supabase>) {
+  const { data, error } = await client
+    .from("training_submissions")
+    .select("user_id, athlete_edited, submitter_display_name, trainings(training_on)")
+    .not("confirmed_at", "is", null);
+
+  if (error) {
+    throw error;
+  }
+  if (!Array.isArray(data)) {
+    throw new Error("Could not load team");
+  }
+
+  return data.map((row) => ({
+    trainingOn: readEmbeddedTrainingOn(row),
+    userId: readString(row, "user_id"),
+    displayName: readSubmitterName(row),
+    athleteEdited: readBoolean(row, "athlete_edited"),
+  }));
+}
+
+function readEmbeddedTrainingOn(row: unknown): string {
+  const embedded = readOwn(row, "trainings");
+  if (typeof embedded !== "object" || embedded === null || Array.isArray(embedded)) {
+    throw new Error("Could not load team");
+  }
+  return readString(embedded, "training_on");
+}
+
+function readSubmitterName(row: unknown): string {
+  const name = readNullableString(row, "submitter_display_name");
+  if (name === null || name === "") {
+    return "Zawodnik";
+  }
+  return name;
+}
 ---
 
 <TeamShell title="Kalendarz">
@@ -171,6 +232,8 @@ function readNullableString(row: unknown, key: string): string | null {
       warsawToday={warsawToday}
       role={role}
       trainings={trainings}
+      athletes={athletes}
+      confirmedSubmissions={confirmedSubmissions}
       submission={submission}
       submissionDate={role === "athlete" ? (initialDate ?? null) : null}
       error={error}
