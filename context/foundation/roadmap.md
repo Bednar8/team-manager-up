@@ -3,7 +3,7 @@ project: "Team Manager"
 version: 1
 status: draft
 created: 2026-09-26
-updated: 2026-10-02
+updated: 2026-10-03
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -48,7 +48,7 @@ Publikacja rankingu jest zablokowana, dopóki nie zostanie zsynchronizowana hist
 | S-02 | athlete-joins-with-code   | zawodnik dołącza do zespołu kodem od trenera                                                 | F-01          | US-01                                         | done |
 | S-03 | photo-readout-confirm     | zawodnik wgrywa jedno zdjęcie w dniu treningu, widzi odczyt i potwierdza dane                | S-01, S-02    | FR-005, FR-006, FR-007, FR-013, US-01         | done |
 | S-04 | km-ranking-publication    | trener i zawodnik widzą ranking po kilometrach, z 0 km bez zgłoszenia                        | S-03          | FR-010, FR-011, FR-014, US-01                 | blocked  |
-| S-05 | coach-sees-submissions    | trener widzi, kto oddał zdjęcie, a kto nie, i może podejrzeć przesłane                       | S-03          | FR-008, US-01                                 | in-progress |
+| S-05 | coach-sees-submissions    | trener widzi, kto oddał zdjęcie, a kto nie, i może podejrzeć przesłane                       | S-03          | FR-008, US-01                                 | done |
 | S-06 | athlete-photo-edit-window | zawodnik zmienia albo usuwa swoje zdjęcie, dopóki nie ma następnego dnia                     | S-03          | FR-009                                        | proposed |
 
 ## Baseline
@@ -140,7 +140,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Druga połowa US-01, w tej samej fali co ranking. Podgląd zdjęcia zostaje przy trenerze; osoby spoza zespołu go nie widzą.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-06: Poprawka zdjęcia do następnego dnia
 
@@ -191,3 +191,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-02: zawodnik może dołączyć do zespołu kodem od trenera, a trener widzi skład zespołu.** — Archived 2026-09-27 → `context/archive/2026-09-26-athlete-joins-with-code/`. Lesson: —.
 - **S-01: trener może dodać trening (data + krótki opis) bez daty wstecznej i bez drugiego treningu tego samego dnia, zmienić opis albo usunąć go tylko gdy data jest przyszła, a zalogowana osoba widzi kalendarz, w tym dni bez treningu.** — Archived 2026-10-01 → `context/archive/2026-09-28-coach-upcoming-training/`. Lesson: —.
 - **S-03: zawodnik może wgrać jedno zdjęcie tylko w dniu z treningiem, widzieć na dole, co udało się odczytać, i zaznaczyć, czy dane są poprawne; bez przynajmniej jednego parametru (liczba kilometrów) zgłoszenie nie przechodzi.** — Archived 2026-10-02 → `context/archive/2026-10-01-photo-readout-confirm/`. Lesson: —.
+- **S-05: trener może zobaczyć, kto wysłał zdjęcie treningu, a kto nie, i podejrzeć, co przesłali.** — Archived 2026-10-03 → `context/archive/2026-10-02-coach-sees-submissions/`. Lesson: —.
