@@ -1,9 +1,147 @@
 ---
 import TeamShell from "@/layouts/TeamShell.astro";
+import { createClient } from "@/lib/supabase";
+
+const { user } = Astro.locals;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+if (!supabase || !user) {
+  throw new Error("Ranking requires a signed-in membership");
+}
+
+const { data: membership, error: membershipError } = await supabase
+  .from("team_members")
+  .select("role")
+  .eq("user_id", user.id)
+  .single();
+
+if (membershipError) {
+  throw membershipError;
+}
+
+const role = readString(membership, "role");
+
+if (role !== "coach" && role !== "athlete") {
+  throw new Error("Could not load team");
+}
+
+const rankingResult = await supabase.rpc("team_km_ranking");
+
+if (rankingResult.error) {
+  throw new Error("Could not load team");
+}
+
+const currentUserId = user.id;
+const ranking = readRanking(rankingResult.data as unknown).sort(
+  (a, b) =>
+    compareKm(a.totalKm, b.totalKm) ||
+    a.displayName.localeCompare(b.displayName, "pl") ||
+    compareId(a.userId, b.userId),
+);
+
+function compareKm(left: number, right: number): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? 1 : -1;
+}
+
+function compareId(left: string, right: string): number {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
+}
+
+function formatKm(totalKm: number): string {
+  const formatted = new Intl.NumberFormat("pl-PL", {
+    maximumFractionDigits: 10,
+    minimumFractionDigits: 0,
+  }).format(totalKm);
+  return `${formatted} km`;
+}
+
+function readString(row: unknown, key: string): string {
+  if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
+    throw new Error("Could not load team");
+  }
+  const value: unknown = Object.getOwnPropertyDescriptor(row, key)?.value;
+  if (typeof value !== "string") {
+    throw new Error("Could not load team");
+  }
+  return value;
+}
+
+function readOwn(row: unknown, key: string): unknown {
+  if (typeof row !== "object" || row === null || !Object.hasOwn(row, key)) {
+    throw new Error("Could not load team");
+  }
+  return Object.getOwnPropertyDescriptor(row, key)?.value;
+}
+
+function readKm(row: unknown): number {
+  const value = readOwn(row, "total_km");
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  throw new Error("Could not load team");
+}
+
+function readPlace(row: unknown): number {
+  const value = readOwn(row, "place");
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return value;
+  }
+  throw new Error("Could not load team");
+}
+
+function readRanking(rows: unknown): { userId: string; displayName: string; totalKm: number; place: number }[] {
+  if (!Array.isArray(rows)) {
+    throw new Error("Could not load team");
+  }
+  return rows.map((row) => ({
+    userId: readString(row, "user_id"),
+    displayName: readString(row, "display_name"),
+    totalKm: readKm(row),
+    place: readPlace(row),
+  }));
+}
 ---
 
 <TeamShell title="Ranking">
-  <main class="flex flex-1 items-center justify-center px-4 py-10">
-    <h1 class="text-3xl font-semibold">Ranking</h1>
+  <main class="flex-1 px-4 py-8">
+    <div class="mx-auto w-full max-w-md">
+      <h1 class="text-3xl font-semibold">Ranking</h1>
+      {ranking.length === 0 ? (
+        <p class="mt-6 text-sm text-muted-foreground">W składzie nie ma zawodników.</p>
+      ) : (
+        <ul class="mt-6 space-y-2">
+          {ranking.map((row) =>
+            row.userId === currentUserId ? (
+              <li class="rounded-md bg-accent px-4 py-3">
+                <p class="text-sm text-accent-foreground">{row.place}</p>
+                <p class="font-semibold">{row.displayName}</p>
+                <p class="text-sm text-accent-foreground">{formatKm(row.totalKm)}</p>
+              </li>
+            ) : (
+              <li class="rounded-md px-4 py-3">
+                <p class="text-sm text-muted-foreground">{row.place}</p>
+                <p class="font-medium">{row.displayName}</p>
+                <p class="text-sm text-muted-foreground">{formatKm(row.totalKm)}</p>
+              </li>
+            ),
+          )}
+        </ul>
+      )}
+    </div>
   </main>
 </TeamShell>

@@ -47,7 +47,7 @@ Publikacja rankingu jest zablokowana, dopóki nie zostanie zsynchronizowana hist
 | S-01 | coach-upcoming-training   | trener dodaje, poprawia opis albo usuwa przyszły trening, a zalogowana osoba widzi kalendarz | F-01          | FR-001, FR-002, FR-003, FR-004, FR-005, US-01 | done |
 | S-02 | athlete-joins-with-code   | zawodnik dołącza do zespołu kodem od trenera                                                 | F-01          | US-01                                         | done |
 | S-03 | photo-readout-confirm     | zawodnik wgrywa jedno zdjęcie w dniu treningu, widzi odczyt i potwierdza dane                | S-01, S-02    | FR-005, FR-006, FR-007, FR-013, US-01         | done |
-| S-04 | km-ranking-publication    | trener i zawodnik widzą ranking po kilometrach, z 0 km bez zgłoszenia                        | S-03          | FR-010, FR-011, FR-014, US-01                 | blocked  |
+| S-04 | km-ranking-publication    | trener i zawodnik widzą ranking po kilometrach, z 0 km bez zgłoszenia                        | S-03          | FR-010, FR-011, FR-014, US-01                 | in-progress |
 | S-05 | coach-sees-submissions    | trener widzi, kto oddał zdjęcie, a kto nie, i może podejrzeć przesłane                       | S-03          | FR-008, US-01                                 | done |
 | S-06 | athlete-photo-edit-window | zawodnik zmienia albo usuwa swoje zdjęcie, dopóki nie ma następnego dnia                     | S-03          | FR-009                                        | proposed |
 
@@ -128,7 +128,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - US-01 pokazuje ranking od razu po zgłoszeniach, a FR-014 każe opublikować go następnego dnia. Która zasada obowiązuje? — Owner: user. Block: yes.
 - **Risk:** To gwiazda przewodnia i stoi tuż po odczycie, bo prędkość każe dowieźć konieczny dowód, gdy tylko są kilometry. Dwie sprzeczne zasady publikacji blokują planowanie; S-05 i S-06 mogą iść obok, bo nie rozstrzygają tego pytania.
-- **Status:** blocked
+- **Status:** in-progress
 
 ### S-05: Kto oddał zdjęcie
 
