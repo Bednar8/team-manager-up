@@ -11,7 +11,7 @@ import {
   formatDayTitle,
   formatMonthHeading,
   isPastCivil,
-  monthGrid,
+  monthWeeks,
   parseCivilDate,
   shiftMonth,
 } from "@/components/calendar/month";
@@ -404,10 +404,7 @@ export default function MonthCalendar({
     if (!inside) closePopup();
   }
 
-  const days = visible ? monthGrid(visible.year, visible.month) : null;
-  const visibleMonthPrefix = visible
-    ? `${String(visible.year).padStart(4, "0")}-${String(visible.month).padStart(2, "0")}-`
-    : "";
+  const weeks = visible ? monthWeeks(visible.year, visible.month) : null;
 
   const selectedDescription = selected ? trainingByDate.get(selected) : undefined;
   const selectedHasTraining = selectedDescription !== undefined;
@@ -443,43 +440,56 @@ export default function MonthCalendar({
           {notice}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="min-h-8 text-xl font-semibold sm:text-2xl">
-          {visible ? formatMonthHeading(visible.year, visible.month) : "\u00a0"}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={goPrev}
+          disabled={!visible}
+          aria-label="Poprzedni miesiąc"
+        >
+          ←
+        </Button>
+        <h2 className="relative min-h-8 text-center text-xl font-semibold whitespace-nowrap tabular-nums sm:text-2xl">
+          {visible ? (
+            <>
+              <span className="invisible inline-grid" aria-hidden="true">
+                {Array.from({ length: 12 }, (_, index) => (
+                  <span key={index} className="col-start-1 row-start-1">
+                    {formatMonthHeading(visible.year, index + 1)}
+                  </span>
+                ))}
+              </span>
+              <span className="absolute inset-0 flex items-center justify-center">
+                {formatMonthHeading(visible.year, visible.month)}
+              </span>
+            </>
+          ) : (
+            "\u00a0"
+          )}
         </h2>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={goPrev}
-            disabled={!visible}
-            aria-label="Poprzedni miesiąc"
-          >
-            ←
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              selectDay(localTodayCivil());
-            }}
-            disabled={!visible}
-          >
-            Dziś
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={goNext}
-            disabled={!visible}
-            aria-label="Następny miesiąc"
-          >
-            →
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={goNext}
+          disabled={!visible}
+          aria-label="Następny miesiąc"
+        >
+          →
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            selectDay(localTodayCivil());
+          }}
+          disabled={!visible}
+        >
+          Dziś
+        </Button>
       </div>
 
       <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-1 overflow-x-hidden">
@@ -492,47 +502,53 @@ export default function MonthCalendar({
           ))}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-1.5">
-          {days
-            ? days.map((civil) => {
-                const dayNumber = Number(civil.slice(8, 10));
-                const inMonth = civil.startsWith(visibleMonthPrefix);
-                const isToday = today !== null && civil === today;
-                const isSelected = selected === civil;
-                const hasTraining = trainingByDate.has(civil);
-                const dayLabel = hasTraining ? `${formatDayTitle(civil)}, trening` : formatDayTitle(civil);
+        <div
+          className="grid min-h-0 flex-1 grid-cols-7 gap-1.5"
+          style={{ gridTemplateRows: `repeat(${weeks?.length ?? 6}, minmax(0, 1fr))` }}
+        >
+          {weeks
+            ? weeks.flatMap((week) =>
+                week.map((day) => {
+                  if (!day.inMonth) {
+                    return <div key={day.civil} aria-hidden="true" />;
+                  }
 
-                return (
-                  <button
-                    key={civil}
-                    id={`day-${civil}`}
-                    type="button"
-                    aria-label={dayLabel}
-                    aria-pressed={isSelected}
-                    aria-current={isToday ? "date" : undefined}
-                    onClick={() => {
-                      selectDay(civil);
-                    }}
-                    className={cn(
-                      "flex h-full min-h-24 w-full flex-col items-start rounded-xl border p-2 text-left tabular-nums transition-colors sm:min-h-28 sm:p-3",
-                      inMonth
-                        ? "bg-card text-foreground hover:bg-accent"
-                        : "bg-muted text-muted-foreground hover:bg-muted/70",
-                      isToday && !isSelected && "ring-primary ring-2 ring-inset",
-                      isSelected &&
-                        "bg-primary text-primary-foreground ring-primary-foreground hover:bg-primary ring-2 ring-inset",
-                    )}
-                  >
-                    <span className="text-lg font-semibold sm:text-xl">{dayNumber}</span>
-                    {hasTraining ? (
-                      <span className="mt-1 flex items-center gap-1 text-xs font-normal">
-                        <Footprints aria-hidden className="size-3.5 shrink-0" />
-                        <span className="hidden lg:inline">trening</span>
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })
+                  const { civil } = day;
+                  const dayNumber = Number(civil.slice(8, 10));
+                  const isToday = today !== null && civil === today;
+                  const isSelected = selected === civil;
+                  const hasTraining = trainingByDate.has(civil);
+                  const dayLabel = hasTraining ? `${formatDayTitle(civil)}, trening` : formatDayTitle(civil);
+
+                  return (
+                    <button
+                      key={civil}
+                      id={`day-${civil}`}
+                      type="button"
+                      aria-label={dayLabel}
+                      aria-pressed={isSelected}
+                      aria-current={isToday ? "date" : undefined}
+                      onClick={() => {
+                        selectDay(civil);
+                      }}
+                      className={cn(
+                        "bg-card text-foreground hover:bg-accent flex h-full min-h-24 w-full flex-col items-start rounded-xl border p-2 text-left tabular-nums transition-colors sm:min-h-28 sm:p-3",
+                        isToday && !isSelected && "ring-primary ring-2 ring-inset",
+                        isSelected &&
+                          "bg-primary text-primary-foreground ring-primary-foreground hover:bg-primary ring-2 ring-inset",
+                      )}
+                    >
+                      <span className="text-lg font-semibold sm:text-xl">{dayNumber}</span>
+                      {hasTraining ? (
+                        <span className="mt-1 flex items-center gap-1 text-xs font-normal">
+                          <Footprints aria-hidden className="size-3.5 shrink-0" />
+                          <span className="hidden lg:inline">trening</span>
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                }),
+              )
             : Array.from({ length: 42 }, (_, index) => (
                 <div key={index} className="bg-muted min-h-24 rounded-xl sm:min-h-28" aria-hidden="true" />
               ))}

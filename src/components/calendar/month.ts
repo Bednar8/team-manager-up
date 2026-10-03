@@ -68,6 +68,28 @@ export function monthGrid(year: number, month: number): string[] {
   return days;
 }
 
+export interface MonthDay {
+  civil: string;
+  inMonth: boolean;
+}
+
+/**
+ * Monday-first weeks that contain at least one day of the given month.
+ * A day from the previous or next month is `{ inMonth: false }`.
+ * October 2026 → five weeks, with 28–30 September and 1 November marked out of month.
+ */
+export function monthWeeks(year: number, month: number): MonthDay[][] {
+  const prefix = `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-`;
+  const days = monthGrid(year, month);
+  const weeks: MonthDay[][] = [];
+  for (let index = 0; index < days.length; index += 7) {
+    const slice = days.slice(index, index + 7);
+    if (!slice.some((civil) => civil.startsWith(prefix))) continue;
+    weeks.push(slice.map((civil) => ({ civil, inMonth: civil.startsWith(prefix) })));
+  }
+  return weeks;
+}
+
 function capitalizePl(value: string): string {
   if (!value) return value;
   return value.charAt(0).toLocaleUpperCase("pl-PL") + value.slice(1);
