@@ -165,25 +165,25 @@ Nie dodajemy kolumn i nie uzupełniamy starych wierszy. Istniejące potwierdzone
 
 #### Automated
 
-- [x] 1.1 `npx supabase migration up` kończy się kodem 0
+- [x] 1.1 `npx supabase migration up` kończy się kodem 0 — 397410d
 
 #### Manual
 
-- [x] 1.2 Potwierdzone kilometry z dzisiejszego treningu nie wchodzą do sumy, a następnego warszawskiego dnia już wchodzą
-- [x] 1.3 Równe sumy dzielą miejsce, a następne miejsce przeskakuje
-- [x] 1.4 Zawodnik bez policzonych kilometrów jest na liście z 0 km
-- [x] 1.5 Trener nie jest zwróconym wierszem
+- [x] 1.2 Potwierdzone kilometry z dzisiejszego treningu nie wchodzą do sumy, a następnego warszawskiego dnia już wchodzą — 397410d
+- [x] 1.3 Równe sumy dzielą miejsce, a następne miejsce przeskakuje — 397410d
+- [x] 1.4 Zawodnik bez policzonych kilometrów jest na liście z 0 km — 397410d
+- [x] 1.5 Trener nie jest zwróconym wierszem — 397410d
 
 ### Phase 2: Strona rankingu
 
 #### Automated
 
-- [x] 2.1 `npm run lint` kończy się kodem 0
-- [x] 2.2 `npm run build` kończy się kodem 0
+- [x] 2.1 `npm run lint` kończy się kodem 0 — 397410d
+- [x] 2.2 `npm run build` kończy się kodem 0 — 397410d
 
 #### Manual
 
-- [x] 2.3 Trener i zawodnik na `/ranking` widzą te same miejsca, imiona i kilometry
-- [x] 2.4 Wiersz zalogowanego zawodnika jest wizualnie wyróżniony, a trenera na liście nie ma
-- [x] 2.5 Zespół bez zawodników pokazuje pusty stan, nie błąd strony
-- [x] 2.6 Lista jest czytelna przy szerokości telefonu
+- [x] 2.3 Trener i zawodnik na `/ranking` widzą te same miejsca, imiona i kilometry — 397410d
+- [x] 2.4 Wiersz zalogowanego zawodnika jest wizualnie wyróżniony, a trenera na liście nie ma — 397410d
+- [x] 2.5 Zespół bez zawodników pokazuje pusty stan, nie błąd strony — 397410d
+- [x] 2.6 Lista jest czytelna przy szerokości telefonu — 397410d
