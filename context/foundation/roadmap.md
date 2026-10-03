@@ -37,7 +37,7 @@ Trener zespołu biegowego zbiera screeny treningów na WhatsAppie i sam sprawdza
 
 **S-04: trener i zawodnik widzą ranking po przebiegniętych kilometrach** — ten kawałek domyka pierwsze kryterium sukcesu: kilometry ze zdjęć zastępują przepisywanie do Excela. Lista „kto oddał” (S-05) jest drugą połową tej samej historyjki i może powstać w tej samej fali; ranking jest gwiazdą przewodnią, bo bez niego zostaje sam podgląd obecności.
 
-Publikacja rankingu jest zablokowana, dopóki nie zostanie zsynchronizowana historyjka US-01 (ranking od razu po zgłoszeniach) z FR-014 (ranking następnego dnia).
+Potwierdzone kilometry wchodzą do rankingu od razu po zatwierdzeniu zgłoszenia, także z dzisiejszego treningu w Warszawie. US-01 i FR-014 są zsynchronizowane.
 
 ## At a glance
 
@@ -119,15 +119,14 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-04: Ranking po kilometrach
 
-- **Outcome:** trener i zawodnik mogą zobaczyć ranking po liczbie przebiegniętych kilometrów, a osoba bez zgłoszenia ma 0 km; moment pokazania rankingu (od razu albo następnego dnia) nie jest jeszcze ustalony.
+- **Outcome:** trener i zawodnik mogą zobaczyć ranking po liczbie przebiegniętych kilometrów, a osoba bez zgłoszenia ma 0 km; potwierdzone kilometry wchodzą od razu, także z dzisiejszego treningu.
 - **Change ID:** km-ranking-publication
 - **PRD refs:** FR-010, FR-011, FR-014, US-01
 - **Prerequisites:** S-03
 - **Parallel with:** S-05, S-06
 - **Blockers:** —
-- **Unknowns:**
-  - US-01 pokazuje ranking od razu po zgłoszeniach, a FR-014 każe opublikować go następnego dnia. Która zasada obowiązuje? — Owner: user. Block: yes.
-- **Risk:** To gwiazda przewodnia i stoi tuż po odczycie, bo prędkość każe dowieźć konieczny dowód, gdy tylko są kilometry. Dwie sprzeczne zasady publikacji blokują planowanie; S-05 i S-06 mogą iść obok, bo nie rozstrzygają tego pytania.
+- **Unknowns:** —
+- **Risk:** To gwiazda przewodnia i stoi tuż po odczycie, bo prędkość każe dowieźć konieczny dowód, gdy tylko są kilometry. S-05 i S-06 mogą iść obok, bo nie rozstrzygają publikacji rankingu.
 - **Status:** done
 
 ### S-05: Kto oddał zdjęcie
@@ -151,7 +150,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Parallel with:** S-04, S-05
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Okno poprawki zmienia kilometry, które wejdą do rankingu, dlatego ląduje obok S-04, a nie przed odczytem. Zamknięcie okna wynika z FR-009 (brak następnego dnia) i nie czeka na rozstrzygnięcie, kiedy ranking staje się widoczny.
+- **Risk:** Okno poprawki zmienia kilometry, które wejdą do rankingu, dlatego ląduje obok S-04, a nie przed odczytem. Zamknięcie okna wynika z FR-009 (brak następnego dnia). Poprawka tego samego dnia przesuwa miejsca od razu.
 - **Status:** proposed
 
 ## Backlog Handoff
@@ -162,7 +161,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-01       | coach-upcoming-training   | Trener ustawia, poprawia i usuwa przyszły trening w kalendarzu  | no                    | Czeka na F-01; równolegle z S-02           |
 | S-02       | athlete-joins-with-code   | Zawodnik dołącza do zespołu kodem od trenera                    | no                    | Czeka na F-01; równolegle z S-01           |
 | S-03       | photo-readout-confirm     | Zawodnik wgrywa jedno zdjęcie, widzi odczyt i potwierdza dane   | no                    | Czeka na S-01 i S-02                       |
-| S-04       | km-ranking-publication    | Ranking po kilometrach dla trenera i zawodnika                  | no                    | Zablokowany przez sprzeczność US-01/FR-014 |
+| S-04       | km-ranking-publication    | Ranking po kilometrach dla trenera i zawodnika                  | no                    | Publikacja od razu po zatwierdzeniu        |
 | S-05       | coach-sees-submissions    | Trener widzi, kto oddał zdjęcie, i może je podejrzeć            | no                    | Czeka na S-03; równolegle z S-04 i S-06    |
 | S-06       | athlete-photo-edit-window | Zawodnik poprawia albo usuwa zdjęcie, zanim jest następny dzień | no                    | Czeka na S-03; równolegle z S-04 i S-05    |
 
@@ -171,7 +170,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 1. **Jak zawodnik trafia do zespołu?** — Kierunek: kod od trenera. Nie zablokowane. Owner: user. Block: —.
 2. **Jakie przykładowe screeny z różnych zegarków weźmiemy do prób?** — TBD. Owner: user. Block: —.
 3. **Jaki konkretny mechanizm logowania?** — "Mechanizm logowania (email + hasło / OAuth / bez hasła) nie został wybrany." TBD. Owner: user. Block: —.
-4. **US-01 vs FR-014:** historyjka pokazuje ranking od razu po zgłoszeniach; Socrates ustalił publikację następnego dnia. Zsynchronizować US-01. Owner: user. Block: S-04.
+4. **US-01 vs FR-014:** rozstrzygnięte. Potwierdzone kilometry wchodzą do rankingu od razu, także z dzisiejszego treningu. Owner: user. Block: —.
 
 ## Parked
 

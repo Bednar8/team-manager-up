@@ -81,7 +81,7 @@ Zawodnik tego samego zespołu. Ma widzieć ranking i czuć rywalizację oraz mot
 - FR-008: Trener może zobaczyć, kto wysłał zdjęcie treningu, a kto nie, i podejrzeć, co przesłali. Priority: must-have
   > Socrates: Counter-argument considered: podgląd zdjęcia jest za dużym wglądem. Resolution: kept; it stands as written.
 - FR-009: Zawodnik może usunąć albo edytować swoje zdjęcie treningu tylko jeśli nie ma jeszcze następnego dnia. Priority: must-have
-  > Socrates: Counter-argument considered: edycja zmienia miejsca w rankingu wstecz. Resolution: kept okno edycji; ranking za trening pojawia się następnego dnia (FR-014).
+  > Socrates: Counter-argument considered: edycja zmienia miejsca w rankingu wstecz. Resolution: kept okno edycji; potwierdzone kilometry wchodzą do rankingu od razu (FR-014), więc poprawka tego samego dnia przesuwa miejsca.
 
 ### Ranking
 
@@ -93,8 +93,8 @@ Zawodnik tego samego zespołu. Ma widzieć ranking i czuć rywalizację oraz mot
   > Socrates: Counter-argument considered: nice-to-have w dokumencie wciąga czas z must-have. Resolution: zostaje nice-to-have, nie must-have.
 - FR-013: Zawodnik może zaznaczyć, czy odczytane ze zdjęcia dane są poprawne. Priority: must-have
   > Socrates: Dodane w rundzie FR-007; bez osobnego wyzwania w tej rundzie.
-- FR-014: Ranking za dany trening pojawia się następnego dnia po treningu. Priority: must-have
-  > Socrates: Dodane w rundzie FR-009; bez osobnego wyzwania w tej rundzie.
+- FR-014: Ranking za dany trening pojawia się od razu po zatwierdzeniu zgłoszenia, także gdy trening jest dzisiaj. Priority: must-have
+  > Socrates: Zmienione 2026-10-03 — wygrywa US-01. Potwierdzone kilometry wchodzą do sumy przy odczycie; trening z przyszłą datą zostaje poza sumą. Poprawka zdjęcia tego samego dnia przesuwa miejsca.
 
 ## Non-Functional Requirements
 
@@ -106,7 +106,7 @@ Zawodnik tego samego zespołu. Ma widzieć ranking i czuć rywalizację oraz mot
 
 Aplikacja ustala miejsca w rankingu po liczbie przebiegniętych kilometrów; osoba bez zgłoszenia ma 0 km.
 
-Zawodnik wprowadza zdjęcie ze swojej aplikacji biegowej i urządzenia oraz potwierdza dane odczytane ze zdjęcia. Wynikiem są odczytane wartości, np. liczba przebiegniętych km, czas, maksymalna prędkość. Ranking widać dla wszystkich następnego dnia; zawodnik widzi wyraźniej swoje miejsce. Trener dodaje trening, potem widzi przepływ zawodników oraz ranking. Raporty — później, poza pierwszą wersją.
+Zawodnik wprowadza zdjęcie ze swojej aplikacji biegowej i urządzenia oraz potwierdza dane odczytane ze zdjęcia. Wynikiem są odczytane wartości, np. liczba przebiegniętych km, czas, maksymalna prędkość. Ranking widać dla wszystkich od razu po zatwierdzeniu zgłoszenia; zawodnik widzi wyraźniej swoje miejsce. Trener dodaje trening, potem widzi przepływ zawodników oraz ranking. Raporty — później, poza pierwszą wersją.
 
 ## Access Control
 
@@ -128,4 +128,4 @@ Jak zawodnik trafia do zespołu: nie zablokowane. Kierunek: kod od trenera.
 1. **Jak zawodnik trafia do zespołu?** — Kierunek: kod od trenera. Nie zablokowane. Owner: user.
 2. **Jakie przykładowe screeny z różnych zegarków weźmiemy do prób?** — TBD. Owner: user.
 3. **Jaki konkretny mechanizm logowania?** — "Mechanizm logowania (email + hasło / OAuth / bez hasła) nie został wybrany." TBD. Owner: user.
-4. **US-01 vs FR-014:** historyjka pokazuje ranking od razu po zgłoszeniach; Socrates ustalił publikację następnego dnia. Zsynchronizować US-01. Owner: user.
+4. **US-01 vs FR-014:** rozstrzygnięte. Potwierdzone kilometry wchodzą do rankingu od razu, także z dzisiejszego treningu. Owner: user.
