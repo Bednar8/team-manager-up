@@ -55,6 +55,14 @@ interface PhotoAttempt {
   cleared: boolean;
 }
 
+interface CoachPreview {
+  day: string;
+  userId: string;
+  status: "loading" | "ready" | "failed";
+  signedUrl: string | null;
+  message: string | null;
+}
+
 interface Props {
   initialDate?: string;
   warsawToday: string;
@@ -79,6 +87,7 @@ const fileClassName =
 const READOUT_FAILED = "Nie udało się odczytać zdjęcia. Wpisz dane albo wgraj inne.";
 const UPLOAD_FAILED = "Nie udało się wgrać zdjęcia.";
 const CONFIRM_FAILED = "Nie udało się potwierdzić.";
+const PREVIEW_FAILED = "Nie udało się otworzyć zdjęcia.";
 const COACH_SEES_EDIT = "Trener zobaczy, że poprawiłeś odczyt.";
 
 const EMPTY_SUBMISSION: Submission = {
@@ -136,8 +145,10 @@ export default function MonthCalendar({
   const [photo, setPhoto] = useState<PhotoAttempt | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [coachPreview, setCoachPreview] = useState<CoachPreview | null>(null);
   const photoAttempt = useRef(0);
   const confirmAttempt = useRef(0);
+  const coachPreviewAttempt = useRef(0);
   const confirmLock = useRef(false);
   const entryDate = initialDate ?? null;
   const visible = paged ?? (today ? civilMonthOf(today) : null);
@@ -155,6 +166,8 @@ export default function MonthCalendar({
     confirmAttempt.current += 1;
     setConfirming(false);
     setConfirmError(null);
+    coachPreviewAttempt.current += 1;
+    setCoachPreview(null);
     if (civil !== entryDate) setNotice(null);
     const url = new URL(window.location.href);
     url.searchParams.set("date", civil);
@@ -163,6 +176,8 @@ export default function MonthCalendar({
   }
 
   function closePopup() {
+    coachPreviewAttempt.current += 1;
+    setCoachPreview(null);
     const param = new URL(window.location.href).searchParams.get("date");
     if (!param || !parseCivilDate(param)) return;
     setNotice(null);
@@ -196,6 +211,8 @@ export default function MonthCalendar({
       confirmAttempt.current += 1;
       setConfirming(false);
       setConfirmError(null);
+      coachPreviewAttempt.current += 1;
+      setCoachPreview(null);
       if (param && parts) {
         setSelected(param);
         setPaged({ year: parts.year, month: parts.month });
@@ -342,6 +359,38 @@ export default function MonthCalendar({
     } finally {
       confirmLock.current = false;
       if (confirmAttempt.current === attempt) setConfirming(false);
+    }
+  }
+
+  async function openSquadPhoto(day: string, userId: string) {
+    const attempt = coachPreviewAttempt.current + 1;
+    coachPreviewAttempt.current = attempt;
+    setCoachPreview({ day, userId, status: "loading", signedUrl: null, message: null });
+
+    try {
+      const params = new URLSearchParams({ training_on: day, user_id: userId });
+      const response = await fetch(`/api/trainings/photo/preview?${params.toString()}`);
+      const body: unknown = await response.json().catch(() => null);
+      if (coachPreviewAttempt.current !== attempt) return;
+      if (!response.ok) {
+        setCoachPreview({
+          day,
+          userId,
+          status: "failed",
+          signedUrl: null,
+          message: readErrorMessage(body) ?? PREVIEW_FAILED,
+        });
+        return;
+      }
+      const signedUrl = readSignedUrl(body);
+      if (!signedUrl) {
+        setCoachPreview({ day, userId, status: "failed", signedUrl: null, message: PREVIEW_FAILED });
+        return;
+      }
+      setCoachPreview({ day, userId, status: "ready", signedUrl, message: null });
+    } catch {
+      if (coachPreviewAttempt.current !== attempt) return;
+      setCoachPreview({ day, userId, status: "failed", signedUrl: null, message: PREVIEW_FAILED });
     }
   }
 
@@ -493,7 +542,7 @@ export default function MonthCalendar({
       <dialog
         ref={dialogRef}
         aria-labelledby="calendar-day-title"
-        className="bg-card text-card-foreground backdrop:bg-foreground/40 fixed top-1/2 left-1/2 z-50 m-0 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-6 shadow-lg"
+        className="bg-card text-card-foreground backdrop:bg-foreground/40 fixed top-1/2 left-1/2 z-50 m-0 max-h-[calc(100dvh-2rem)] w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border p-6 shadow-lg"
         onClose={closePopup}
         onClick={onDialogClick}
       >
@@ -557,7 +606,15 @@ export default function MonthCalendar({
                     Usuń
                   </Button>
                 </form>
-                {squadListVisible ? <SquadDayList rows={squadRows} /> : null}
+                {squadListVisible ? (
+                  <SquadDayList
+                    rows={squadRows}
+                    preview={coachPreview?.day === selected ? coachPreview : null}
+                    onOpen={(userId) => {
+                      void openSquadPhoto(selected, userId);
+                    }}
+                  />
+                ) : null}
               </div>
             ) : null}
 
@@ -605,7 +662,15 @@ export default function MonthCalendar({
             {!coachCanWrite && selectedHasTraining && !athleteCanUpload ? (
               <>
                 <p className="mt-3 text-sm whitespace-pre-wrap">{selectedDescription}</p>
-                {squadListVisible ? <SquadDayList rows={squadRows} /> : null}
+                {squadListVisible ? (
+                  <SquadDayList
+                    rows={squadRows}
+                    preview={coachPreview?.day === selected ? coachPreview : null}
+                    onOpen={(userId) => {
+                      void openSquadPhoto(selected, userId);
+                    }}
+                  />
+                ) : null}
                 <div className="mt-6 flex justify-end">
                   <Button type="button" variant="outline" onClick={closePopup}>
                     Zamknij
@@ -646,34 +711,74 @@ interface SquadDayRow {
   displayName: string;
   createdAt: string | null;
   submitted: boolean;
+  athleteEdited: boolean;
 }
 
-function SquadDayList({ rows }: { rows: SquadDayRow[] }) {
+function SquadDayList({
+  rows,
+  preview,
+  onOpen,
+}: {
+  rows: SquadDayRow[];
+  preview: CoachPreview | null;
+  onOpen: (userId: string) => void;
+}) {
   if (rows.length === 0) {
     return <p className="text-muted-foreground mt-4 text-sm">W zespole nie ma zawodników.</p>;
   }
 
   return (
     <ul className="mt-4 flex flex-col gap-1">
-      {rows.map((row) => (
-        <li key={row.userId} className="flex items-baseline justify-between gap-3 text-sm">
-          <span className="min-w-0 break-words">{row.displayName}</span>
-          <span className="shrink-0">{row.submitted ? "Oddał" : "Nie oddał"}</span>
-        </li>
-      ))}
+      {rows.map((row) => {
+        const rowPreview = preview?.userId === row.userId ? preview : null;
+        const photoUrl = rowPreview !== null && rowPreview.status === "ready" ? rowPreview.signedUrl : null;
+        const photoError =
+          rowPreview !== null && rowPreview.status === "failed" ? (rowPreview.message ?? PREVIEW_FAILED) : null;
+
+        return (
+          <li key={row.userId}>
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="min-w-0 break-words">{row.displayName}</span>
+              {row.submitted ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto px-0 py-0 font-normal text-current"
+                  onClick={() => {
+                    onOpen(row.userId);
+                  }}
+                >
+                  Oddał
+                </Button>
+              ) : (
+                <span className="shrink-0">Nie oddał</span>
+              )}
+            </div>
+            {photoError ? <p className="text-destructive mt-1 text-sm">{photoError}</p> : null}
+            {photoUrl ? (
+              <>
+                <img src={photoUrl} alt="" className="mt-2 block max-w-full" />
+                {row.athleteEdited ? <p className="mt-2 text-sm">Poprawił odczyt.</p> : null}
+              </>
+            ) : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
 function rowsForTrainingDay(day: string, athletes: SquadAthlete[], submissions: ConfirmedSubmission[]): SquadDayRow[] {
   const onSquad = new Set(athletes.map((athlete) => athlete.userId));
-  const submitted = new Set<string>();
+  const submitted = new Map<string, boolean>();
   const outside: ConfirmedSubmission[] = [];
 
   for (const submission of submissions) {
     if (submission.trainingOn !== day) continue;
     if (onSquad.has(submission.userId)) {
-      submitted.add(submission.userId);
+      if (!submitted.has(submission.userId)) {
+        submitted.set(submission.userId, submission.athleteEdited);
+      }
       continue;
     }
     outside.push(submission);
@@ -684,6 +789,7 @@ function rowsForTrainingDay(day: string, athletes: SquadAthlete[], submissions: 
     displayName: athlete.displayName,
     createdAt: athlete.createdAt,
     submitted: submitted.has(athlete.userId),
+    athleteEdited: submitted.get(athlete.userId) ?? false,
   }));
 
   const seenOutside = new Set<string>();
@@ -695,6 +801,7 @@ function rowsForTrainingDay(day: string, athletes: SquadAthlete[], submissions: 
       displayName: submission.displayName,
       createdAt: null,
       submitted: true,
+      athleteEdited: submission.athleteEdited,
     });
   }
 

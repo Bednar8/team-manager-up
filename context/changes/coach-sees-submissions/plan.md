@@ -243,23 +243,23 @@ Jeden zespół i mała liczba wierszy. Strona i tak ładuje wszystkie treningi. 
 
 #### Automated
 
-- [x] 2.1 `npm run lint` przechodzi
-- [x] 2.2 `npm run build` przechodzi
+- [x] 2.1 `npm run lint` przechodzi — 9bcaac7
+- [x] 2.2 `npm run build` przechodzi — 9bcaac7
 
 #### Manual
 
-- [x] 2.3 Dziś w Warszawie jest trening: jeden zawodnik potwierdził, drugi ma sam odczyt, trzeci nie zaczął. Trener widzi Oddał, Nie oddał i Nie oddał, w kolejności nazwisk jak na stronie zespołu, i nadal zapisuje opis
-- [x] 2.4 Wczorajszy trening pokazuje opis i listę, bez formularza. Jutrzejszy trening zostaje przy formularzu, bez listy
-- [x] 2.5 Zawodnik, który dołączył po wczoraj, jest na wczoraj jako Nie oddał. Osoba po potwierdzeniu poza składem jest jako Oddał pod zapisanym imieniem. Trenera nie ma na liście. Zawodnik nie widzi listy. Sam trener w zespole widzi „W zespole nie ma zawodników.”
+- [x] 2.3 Dziś w Warszawie jest trening: jeden zawodnik potwierdził, drugi ma sam odczyt, trzeci nie zaczął. Trener widzi Oddał, Nie oddał i Nie oddał, w kolejności nazwisk jak na stronie zespołu, i nadal zapisuje opis — 9bcaac7
+- [x] 2.4 Wczorajszy trening pokazuje opis i listę, bez formularza. Jutrzejszy trening zostaje przy formularzu, bez listy — 9bcaac7
+- [x] 2.5 Zawodnik, który dołączył po wczoraj, jest na wczoraj jako Nie oddał. Osoba po potwierdzeniu poza składem jest jako Oddał pod zapisanym imieniem. Trenera nie ma na liście. Zawodnik nie widzi listy. Sam trener w zespole widzi „W zespole nie ma zawodników.” — 9bcaac7
 
 ### Phase 3: Podgląd zdjęcia
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` przechodzi
-- [ ] 3.2 `npm run build` przechodzi
+- [x] 3.1 `npm run lint` przechodzi
+- [x] 3.2 `npm run build` przechodzi
 
 #### Manual
 
-- [ ] 3.3 Otwarcie Oddał pokazuje zdjęcie. Przy `athlete_edited` pod zdjęciem jest dokładnie „Poprawił odczyt.” Bez poprawki tego napisu nie ma. Kilometrów, czasu i prędkości nie ma
-- [ ] 3.4 Nie oddał nie otwiera zdjęcia. Zawodnik, osoba spoza zespołu i wiersz niepotwierdzony nie dostają adresu podglądu
+- [x] 3.3 Otwarcie Oddał pokazuje zdjęcie. Przy `athlete_edited` pod zdjęciem jest dokładnie „Poprawił odczyt.” Bez poprawki tego napisu nie ma. Kilometrów, czasu i prędkości nie ma
+- [x] 3.4 Nie oddał nie otwiera zdjęcia. Zawodnik, osoba spoza zespołu i wiersz niepotwierdzony nie dostają adresu podglądu
