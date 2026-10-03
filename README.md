@@ -112,7 +112,7 @@ npx supabase stop
 
 The local Studio UI is available at `http://localhost:54323`.
 
-Local setup also needs the `teams` and `team_members` tables. Run `npx supabase db reset` (or `supabase start` on a fresh stack) so migrations apply them alongside Auth's built-in `auth.users` table.
+Local setup also needs the tables from `supabase/migrations/`, alongside Auth's built-in `auth.users` table. A fresh `npx supabase start` applies them. `npx supabase db reset` drops every local row and reloads `supabase/seed.sql`; use it only when you mean to wipe that data. To apply a new migration without deleting existing values, run `npx supabase migration up`. If a row is missing, insert only that row.
 
 ### Using a cloud Supabase project instead
 

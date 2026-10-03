@@ -12,6 +12,7 @@ This repo is an Astro 7 server-rendered app (React 19 islands, Tailwind CSS 4, S
 - Add each authenticated path to `PROTECTED_ROUTES` in @src/middleware.ts.
 - Read `SUPABASE_URL` and `SUPABASE_KEY` only via `astro:env/server`. Keep local copies in gitignored `.env` and `.dev.vars`.
 - Name migrations `YYYYMMDDHHmmss_short_description.sql` under `supabase/migrations/`, with RLS and per-operation, per-role policies.
+- Keep local Supabase rows. Do not run `npx supabase db reset`, truncate tables, or delete existing values. Apply a pending migration with `npx supabase migration up`. If a task needs a missing value, insert only that row. Leave @supabase/seed.sql empty of domain data.
 
 ## Build, test, and development
 

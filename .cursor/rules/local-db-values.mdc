@@ -1,0 +1,14 @@
+---
+description: Keep local Supabase row values; insert only what a task needs
+alwaysApply: true
+---
+
+# Local database values
+
+The local Supabase database holds the developer's working rows (auth users, teams, trainings, submissions, and the rest).
+
+- Do not run `npx supabase db reset` or `supabase db reset`.
+- Do not `TRUNCATE` a table, drop its rows, or `DELETE` existing values to get a clean database.
+- Apply a pending migration with `npx supabase migration up`. That leaves existing rows in place.
+- When a task needs a value that is missing, insert or update only that value. Leave every other local row untouched.
+- Leave `supabase/seed.sql` empty of domain data. Do not reload the database from a seed file.
