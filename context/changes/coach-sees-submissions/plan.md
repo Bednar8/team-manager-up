@@ -256,10 +256,10 @@ Jeden zespół i mała liczba wierszy. Strona i tak ładuje wszystkie treningi. 
 
 #### Automated
 
-- [x] 3.1 `npm run lint` przechodzi
-- [x] 3.2 `npm run build` przechodzi
+- [x] 3.1 `npm run lint` przechodzi — 46e1126
+- [x] 3.2 `npm run build` przechodzi — 46e1126
 
 #### Manual
 
-- [x] 3.3 Otwarcie Oddał pokazuje zdjęcie. Przy `athlete_edited` pod zdjęciem jest dokładnie „Poprawił odczyt.” Bez poprawki tego napisu nie ma. Kilometrów, czasu i prędkości nie ma
-- [x] 3.4 Nie oddał nie otwiera zdjęcia. Zawodnik, osoba spoza zespołu i wiersz niepotwierdzony nie dostają adresu podglądu
+- [x] 3.3 Otwarcie Oddał pokazuje zdjęcie. Przy `athlete_edited` pod zdjęciem jest dokładnie „Poprawił odczyt.” Bez poprawki tego napisu nie ma. Kilometrów, czasu i prędkości nie ma — 46e1126
+- [x] 3.4 Nie oddał nie otwiera zdjęcia. Zawodnik, osoba spoza zespołu i wiersz niepotwierdzony nie dostają adresu podglądu — 46e1126
