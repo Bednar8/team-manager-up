@@ -26,3 +26,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Local test resource ownership (no secrets)
+.test-runs/

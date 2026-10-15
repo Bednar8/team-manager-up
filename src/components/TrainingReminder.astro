@@ -1,0 +1,94 @@
+---
+import { createClient } from "@/lib/supabase";
+import { pendingTrainingDate } from "@/lib/training-reminder";
+
+const client = createClient(Astro.request.headers, Astro.cookies);
+const user = Astro.locals.user;
+let date: string | null = null;
+if (client && user) {
+  // An unavailable reminder must not prevent the rest of the page from rendering.
+  try {
+    date = await pendingTrainingDate(client, user.id);
+  } catch {
+    /* Retried in the browser. */
+  }
+}
+---
+
+<aside
+  id="training-reminder"
+  aria-label="Przypomnienie o treningu"
+  hidden={!date}
+  data-training-date={date ?? ""}
+  class="fixed bottom-4 left-4 right-4 z-40 sm:left-auto"
+>
+  <a
+    href={date ? `/calendar?date=${date}` : "/calendar"}
+    class="bg-primary text-primary-foreground focus-visible:ring-ring flex items-center justify-center gap-3 rounded-xl border px-5 py-4 font-semibold shadow-lg transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+  >
+    Prześlij dzisiejszy trening
+    <span aria-hidden="true">→</span>
+  </a>
+</aside>
+
+<script>
+  import { parseCivilDate } from "@/components/calendar/month";
+
+  const reminder = document.querySelector<HTMLElement>("#training-reminder");
+  const link = reminder?.querySelector("a");
+  if (reminder && link) {
+    let checking = false;
+    let version = 0;
+    const refresh = async () => {
+      if (checking || document.hidden) return;
+      const today = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Warsaw",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+      if (reminder.dataset.trainingDate !== today) reminder.hidden = true;
+      checking = true;
+      const attempt = version;
+      try {
+        const response = await fetch("/api/trainings/reminder", {
+          redirect: "manual",
+          cache: "no-store",
+          signal: AbortSignal.timeout(10000),
+        });
+        if (attempt !== version) return;
+        if (response.status === 401 || response.status === 302) {
+          reminder.hidden = true;
+          return;
+        }
+        if (!response.ok) return;
+        const body: unknown = await response.json();
+        if (attempt !== version || typeof body !== "object" || body === null || !("date" in body)) return;
+        const date = typeof body.date === "string" && parseCivilDate(body.date) ? body.date : null;
+        reminder.hidden = date === null;
+        reminder.dataset.trainingDate = date ?? "";
+        link.href = date ? `/calendar?date=${date}` : "/calendar";
+      } catch {
+        /* Keep the last known state during a temporary connection failure. */
+      } finally {
+        checking = false;
+      }
+    };
+    window.addEventListener("training-submitted", (event) => {
+      if (event instanceof CustomEvent && event.detail === reminder.dataset.trainingDate) {
+        version += 1;
+        reminder.hidden = true;
+      }
+    });
+    window.addEventListener("focus", () => {
+      void refresh();
+    });
+    document.addEventListener("visibilitychange", () => {
+      void refresh();
+    });
+    window.setInterval(() => {
+      void refresh();
+    }, 60_000);
+    void refresh();
+  }
+</script>

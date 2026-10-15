@@ -1,6 +1,7 @@
 ---
 import TeamShell from "@/layouts/TeamShell.astro";
 import { createClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 const { user } = Astro.locals;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
@@ -28,7 +29,7 @@ if (role !== "coach" && role !== "athlete") {
 
 const { data: squad, error: squadError } = await supabase
   .from("team_members")
-  .select("id, display_name, role, created_at")
+  .select("id, user_id, display_name, role, created_at")
   .eq("team_id", teamId);
 
 if (squadError) {
@@ -37,10 +38,16 @@ if (squadError) {
 
 const members = readMembers(squad).sort(
   (a, b) =>
+    Number(b.userId === user.id) - Number(a.userId === user.id) ||
     a.displayName.localeCompare(b.displayName, "pl") ||
     a.createdAt.localeCompare(b.createdAt) ||
     a.id.localeCompare(b.id),
 );
+
+const sections = [
+  { id: "team-coach", title: "Trener:", members: members.filter((member) => member.role === "coach") },
+  { id: "team-athletes", title: "Zawodnicy:", members: members.filter((member) => member.role === "athlete") },
+];
 
 const { data: codeRow, error: codeError } = await supabase
   .from("team_join_codes")
@@ -67,7 +74,7 @@ function readString(row: unknown, key: string): string {
 
 function readMembers(
   rows: unknown,
-): { id: string; displayName: string; role: "coach" | "athlete"; createdAt: string }[] {
+): { id: string; userId: string; displayName: string; role: "coach" | "athlete"; createdAt: string }[] {
   if (!Array.isArray(rows)) {
     throw new Error("Could not load team");
   }
@@ -78,6 +85,7 @@ function readMembers(
     }
     return {
       id: readString(row, "id"),
+      userId: readString(row, "user_id"),
       displayName: readString(row, "display_name"),
       role: memberRole,
       createdAt: readString(row, "created_at"),
@@ -92,29 +100,85 @@ function readMembers(
       <h1 class="text-3xl font-semibold">Zespół</h1>
       {joinCode && (
         <div class="mt-6">
-          <p class="font-mono text-sm tracking-widest" data-team-code={joinCode}>
+          <p class="select-all font-mono text-sm tracking-widest" data-team-code={joinCode}>
             {joinCode}
           </p>
-          <a href="/team/code" class="mt-2 inline-block text-sm font-medium text-primary underline">
-            Wymień kod
-          </a>
+          <div class="mt-2 flex flex-wrap items-center gap-4">
+            <button
+              id="copy-team-code"
+              type="button"
+              class="text-primary focus-visible:ring-ring cursor-pointer rounded-sm text-sm font-medium underline focus-visible:outline-none focus-visible:ring-2 disabled:cursor-wait disabled:opacity-70"
+            >
+              Kopiuj kod
+            </button>
+            <a href="/team/code" class="text-primary text-sm font-medium underline">
+              Wymień kod
+            </a>
+          </div>
+          <p id="copy-team-code-status" role="status" class="text-muted-foreground text-sm"></p>
         </div>
       )}
-      <ul class="mt-6 space-y-2">
-        {members.map((member) =>
-          member.role === "coach" ? (
-            <li class="rounded-md bg-accent px-4 py-3">
-              <p class="font-semibold">{member.displayName}</p>
-              <p class="text-sm text-accent-foreground">Trener</p>
-            </li>
-          ) : (
-            <li class="rounded-md px-4 py-3">
-              <p class="font-medium">{member.displayName}</p>
-              <p class="text-sm text-muted-foreground">Zawodnik</p>
-            </li>
-          ),
-        )}
-      </ul>
+      <div class="mt-6 space-y-6">
+        {sections.map((section) => (
+          <section aria-labelledby={section.id} class="border-t pt-5">
+            <h2 id={section.id} class="mb-3 text-lg font-semibold">
+              {section.title}
+            </h2>
+            {section.members.length > 0 ? (
+              <ul class="space-y-2">
+                {section.members.map((member) => (
+                  <li
+                    class:list={cn(
+                      "flex items-center justify-between gap-3 rounded-lg border px-4 py-3",
+                      member.userId === user.id ? "bg-accent border-primary/30" : "bg-card",
+                    )}
+                  >
+                    <p class="min-w-0 break-words font-medium">{member.displayName}</p>
+                    {member.userId === user.id && (
+                      <span class="bg-primary text-primary-foreground shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold">
+                        Ty
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="text-muted-foreground text-sm">
+                {section.id === "team-athletes" ? "Brak zawodników w zespole." : "Brak trenera w zespole."}
+              </p>
+            )}
+          </section>
+        ))}
+      </div>
     </div>
   </main>
 </TeamShell>
+
+<script>
+  const copyButton = document.querySelector<HTMLButtonElement>("#copy-team-code");
+  const copyStatus = document.querySelector<HTMLParagraphElement>("#copy-team-code-status");
+  const code = document.querySelector<HTMLElement>("[data-team-code]")?.dataset.teamCode;
+
+  if (copyButton && copyStatus && code) {
+    let resetTimer: ReturnType<typeof setTimeout> | undefined;
+    copyButton.addEventListener("click", async () => {
+      window.clearTimeout(resetTimer);
+      copyButton.disabled = true;
+      copyStatus.textContent = "";
+      try {
+        await navigator.clipboard.writeText(code);
+        copyButton.textContent = "Skopiowano!";
+        copyStatus.textContent = "Kod zespołu skopiowany do schowka.";
+        resetTimer = setTimeout(() => {
+          copyButton.textContent = "Kopiuj kod";
+          copyStatus.textContent = "";
+        }, 2500);
+      } catch {
+        copyButton.textContent = "Kopiuj kod";
+        copyStatus.textContent = "Nie udało się skopiować. Zaznacz kod i skopiuj go ręcznie.";
+      } finally {
+        copyButton.disabled = false;
+      }
+    });
+  }
+</script>

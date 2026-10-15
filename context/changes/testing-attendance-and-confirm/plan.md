@@ -1,3 +1,5 @@
+> **Aktualizacja kontraktu (2026-10-15):** `context/changes/preserve-local-test-data/plan.md` zastępuje instrukcje pozostawiania fixture i ręcznego logowania na konta ostatniego przebiegu. Nowe testy rejestrują własne zasoby i sprzątają je po sukcesie lub błędzie, zachowując wcześniejsze dane; po przerwaniu użyj `npm run test:cleanup -- <run-id>`. Poniższe kroki i Progress są historycznym zapisem i pozostają bez zmian.
+
 # Lista oddanych i zapis potwierdzenia — plan testów
 
 ## Overview
@@ -269,9 +271,9 @@ Brak migracji schematu. Testy dopisują użytkowników, zespół, trening i zgł
 
 #### Automated
 
-- [x] 2.1 Coach page for Warsaw today binds the confirming athlete to `Oddał`, and the uploaded-only and silent athletes to `Nie oddał`
-- [x] 2.2 The confirming athlete's row stores distance 7, model distance 6.5, `athlete_edited` true, `confirmed_at` set, on today's training
-- [x] 2.3 The uploaded-only athlete's row has `confirmed_at` null
+- [x] 2.1 Coach page for Warsaw today binds the confirming athlete to `Oddał`, and the uploaded-only and silent athletes to `Nie oddał` — 947d16e
+- [x] 2.2 The confirming athlete's row stores distance 7, model distance 6.5, `athlete_edited` true, `confirmed_at` set, on today's training — 947d16e
+- [x] 2.3 The uploaded-only athlete's row has `confirmed_at` null — 947d16e
 
 #### Manual
 
@@ -282,7 +284,7 @@ Brak migracji schematu. Testy dopisują użytkowników, zespół, trening i zgł
 
 #### Automated
 
-- [ ] 3.1 Coach page for the previous Warsaw civil day shows the seeded description and binds the seeded athlete to `Oddał` and the other two athletes to `Nie oddał`
+- [x] 3.1 Coach page for the previous Warsaw civil day shows the seeded description and binds the seeded athlete to `Oddał` and the other two athletes to `Nie oddał`
 
 #### Manual
 

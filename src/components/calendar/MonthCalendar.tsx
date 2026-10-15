@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Footprints } from "lucide-react";
+import { CircleCheck, Footprints } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseDecimalInput, parseDurationInput } from "@/lib/training-photo-input";
 import { cn } from "@/lib/utils";
@@ -65,6 +65,7 @@ interface CoachPreview {
 
 interface Props {
   initialDate?: string;
+  success?: { date: string; message: string };
   warsawToday: string;
   role: "coach" | "athlete";
   trainings: Training[];
@@ -124,6 +125,7 @@ function todayOnServer(): null {
 
 export default function MonthCalendar({
   initialDate,
+  success,
   warsawToday,
   role,
   trainings,
@@ -134,9 +136,16 @@ export default function MonthCalendar({
   error,
 }: Props) {
   const initialParts = initialDate ? parseCivilDate(initialDate) : null;
+  const createdParts = success ? parseCivilDate(success.date) : null;
+  const shownMonth = initialParts ?? createdParts;
+  const [toast, setToast] = useState<{ message: string } | null>(() => (success ? { message: success.message } : null));
+  const [trainingList, setTrainingList] = useState(trainings);
+  const [saving, setSaving] = useState<"create" | "update" | "delete" | null>(null);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
+  const trainingLock = useRef(false);
   const today = useSyncExternalStore(subscribeToToday, localTodayCivil, todayOnServer);
   const [paged, setPaged] = useState<{ year: number; month: number } | null>(() =>
-    initialParts ? { year: initialParts.year, month: initialParts.month } : null,
+    shownMonth ? { year: shownMonth.year, month: shownMonth.month } : null,
   );
   const [selected, setSelected] = useState<string | null>(() =>
     initialParts ? formatCivilDate(initialParts.year, initialParts.month, initialParts.day) : null,
@@ -156,11 +165,86 @@ export default function MonthCalendar({
   const pushedRef = useRef(false);
   const lastDayRef = useRef<string | null>(selected);
 
-  const trainingByDate = new Map(trainings.map((training) => [training.trainingOn, training.description]));
+  const trainingByDate = new Map(trainingList.map((training) => [training.trainingOn, training.description]));
+
+  useEffect(() => {
+    if (!success) return;
+    const url = new URL(window.location.href);
+    for (const param of ["created", "updated", "deleted"]) url.searchParams.delete(param);
+    history.replaceState(history.state, "", `${url.pathname}${url.search}`);
+  }, [success]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timeout = window.setTimeout(() => {
+      setToast(null);
+    }, 4000);
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [toast]);
+
+  async function saveTraining(event: React.SubmitEvent<HTMLFormElement>, operation: "create" | "update" | "delete") {
+    event.preventDefault();
+    if (trainingLock.current) return;
+    const body = new FormData(event.currentTarget);
+    const day = body.get("training_on");
+    if (typeof day !== "string") return;
+    trainingLock.current = true;
+    setSaving(operation);
+    setTrainingError(null);
+    try {
+      const response = await fetch(`/api/trainings/${operation}`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body,
+        redirect: "error",
+      });
+      const result: unknown = await response.json().catch(() => null);
+      if (!response.ok) {
+        setTrainingError(readErrorMessage(result) ?? "Nie udało się zapisać treningu. Spróbuj ponownie.");
+        return;
+      }
+      if (
+        typeof result !== "object" ||
+        result === null ||
+        readOwn(result, "trainingOn") !== day ||
+        (operation !== "delete" && typeof readOwn(result, "description") !== "string")
+      ) {
+        setTrainingError("Nie udało się potwierdzić zapisu treningu. Odśwież kalendarz.");
+        return;
+      }
+      const description = readOwn(result, "description");
+      setTrainingList((previous) => {
+        const remaining = previous.filter((training) => training.trainingOn !== day);
+        return operation === "delete" || typeof description !== "string"
+          ? remaining
+          : [...remaining, { trainingOn: day, description }];
+      });
+      const messages = {
+        create: "Trening dodany pomyślnie!",
+        update: "Trening zaktualizowany pomyślnie!",
+        delete: "Trening usunięty pomyślnie!",
+      };
+      setToast({ message: messages[operation] });
+      const url = new URL(window.location.href);
+      for (const param of ["date", "error", "created", "updated", "deleted"]) url.searchParams.delete(param);
+      history.replaceState(null, "", `${url.pathname}${url.search}`);
+      pushedRef.current = false;
+      setNotice(null);
+      setSelected(null);
+    } catch {
+      setTrainingError("Nie udało się zapisać treningu. Sprawdź połączenie i spróbuj ponownie.");
+    } finally {
+      trainingLock.current = false;
+      setSaving(null);
+    }
+  }
 
   function selectDay(civil: string) {
     const month = civilMonthOf(civil);
     if (!month) return;
+    setTrainingError(null);
     setPaged(month);
     setSelected(civil);
     confirmAttempt.current += 1;
@@ -176,6 +260,7 @@ export default function MonthCalendar({
   }
 
   function closePopup() {
+    if (trainingLock.current) return;
     coachPreviewAttempt.current += 1;
     setCoachPreview(null);
     const param = new URL(window.location.href).searchParams.get("date");
@@ -354,6 +439,17 @@ export default function MonthCalendar({
         return;
       }
       setPhoto({ date: day, status: "ready", message: null, values, cleared: true });
+      window.dispatchEvent(new CustomEvent("training-submitted", { detail: day }));
+      if (confirmAttempt.current === attempt) {
+        setToast({ message: "Trening zapisany!" });
+        const url = new URL(window.location.href);
+        url.searchParams.delete("date");
+        url.searchParams.delete("error");
+        history.replaceState(null, "", `${url.pathname}${url.search}`);
+        pushedRef.current = false;
+        setNotice(null);
+        setSelected(null);
+      }
     } catch {
       if (confirmAttempt.current === attempt) setConfirmError(CONFIRM_FAILED);
     } finally {
@@ -435,6 +531,15 @@ export default function MonthCalendar({
 
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3">
+      {toast ? (
+        <div
+          role="status"
+          className="bg-card text-card-foreground fixed right-4 bottom-4 left-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm shadow-lg sm:left-auto"
+        >
+          <CircleCheck aria-hidden className="text-primary size-5 shrink-0" />
+          {toast.message}
+        </div>
+      ) : null}
       {notice && !selected ? (
         <p className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-sm">
           {notice}
@@ -560,6 +665,9 @@ export default function MonthCalendar({
         aria-labelledby="calendar-day-title"
         className="bg-card text-card-foreground backdrop:bg-foreground/40 fixed top-1/2 left-1/2 z-50 m-0 max-h-[calc(100dvh-2rem)] w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border p-6 shadow-lg"
         onClose={closePopup}
+        onCancel={(event) => {
+          if (trainingLock.current) event.preventDefault();
+        }}
         onClick={onDialogClick}
       >
         {selected ? (
@@ -569,9 +677,22 @@ export default function MonthCalendar({
             </h2>
 
             {showNotice ? <p className="text-destructive mt-3 text-sm">{notice}</p> : null}
+            {trainingError ? (
+              <p role="alert" className="text-destructive mt-3 text-sm">
+                {trainingError}
+              </p>
+            ) : null}
 
             {coachCanWrite && !selectedHasTraining ? (
-              <form key={selected} method="post" action="/api/trainings/create" className="mt-3">
+              <form
+                key={selected}
+                method="post"
+                action="/api/trainings/create"
+                onSubmit={(event) => {
+                  void saveTraining(event, "create");
+                }}
+                className="mt-3"
+              >
                 <input type="hidden" name="training_on" value={selected} />
                 <label htmlFor="training-description" className="text-muted-foreground mb-1 block text-sm">
                   Opis
@@ -579,6 +700,7 @@ export default function MonthCalendar({
                 <textarea
                   id="training-description"
                   name="description"
+                  disabled={saving !== null}
                   required
                   maxLength={200}
                   rows={4}
@@ -588,14 +710,23 @@ export default function MonthCalendar({
                   <Button type="button" variant="outline" onClick={closePopup}>
                     Zamknij
                   </Button>
-                  <Button type="submit">Dodaj</Button>
+                  <Button type="submit" disabled={saving !== null}>
+                    {saving === "create" ? "Dodawanie…" : "Dodaj"}
+                  </Button>
                 </div>
               </form>
             ) : null}
 
             {coachCanWrite && selectedHasTraining ? (
               <div key={selected}>
-                <form method="post" action="/api/trainings/update" className="mt-3">
+                <form
+                  method="post"
+                  action="/api/trainings/update"
+                  onSubmit={(event) => {
+                    void saveTraining(event, "update");
+                  }}
+                  className="mt-3"
+                >
                   <input type="hidden" name="training_on" value={selected} />
                   <label htmlFor="training-description" className="text-muted-foreground mb-1 block text-sm">
                     Opis
@@ -603,6 +734,7 @@ export default function MonthCalendar({
                   <textarea
                     id="training-description"
                     name="description"
+                    disabled={saving !== null}
                     required
                     maxLength={200}
                     rows={4}
@@ -613,13 +745,22 @@ export default function MonthCalendar({
                     <Button type="button" variant="outline" onClick={closePopup}>
                       Zamknij
                     </Button>
-                    <Button type="submit">Zapisz</Button>
+                    <Button type="submit" disabled={saving !== null}>
+                      {saving === "update" ? "Zapisywanie…" : "Zapisz"}
+                    </Button>
                   </div>
                 </form>
-                <form method="post" action="/api/trainings/delete" className="mt-2 flex justify-end">
+                <form
+                  method="post"
+                  action="/api/trainings/delete"
+                  onSubmit={(event) => {
+                    void saveTraining(event, "delete");
+                  }}
+                  className="mt-2 flex justify-end"
+                >
                   <input type="hidden" name="training_on" value={selected} />
-                  <Button type="submit" variant="destructive">
-                    Usuń
+                  <Button type="submit" variant="destructive" disabled={saving !== null}>
+                    {saving === "delete" ? "Usuwanie…" : "Usuń"}
                   </Button>
                 </form>
                 {squadListVisible ? (

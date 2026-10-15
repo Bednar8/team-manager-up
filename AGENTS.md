@@ -10,9 +10,11 @@ This repo is an Astro 7 server-rendered app (React 19 islands, Tailwind CSS 4, S
 - Merge classes with `cn()` from `@/lib/utils`. Put shadcn/ui in `src/components/ui/` and add with `npx shadcn@latest add <name>` (`new-york` in @components.json).
 - Do not add `"use client"`. Match @src/pages/api/auth/signin.ts.
 - Add each authenticated path to `PROTECTED_ROUTES` in @src/middleware.ts.
-- Read `SUPABASE_URL` and `SUPABASE_KEY` only via `astro:env/server`. Keep local copies in gitignored `.env` and `.dev.vars`.
+- Application code reads `SUPABASE_URL` and `SUPABASE_KEY` only via `astro:env/server`. Node test tools read local URL/service-role configuration as documented in @README.md. Keep local copies in gitignored `.env` and `.dev.vars`.
 - Name migrations `YYYYMMDDHHmmss_short_description.sql` under `supabase/migrations/`, with RLS and per-operation, per-role policies.
-- Keep local Supabase rows. Do not run `npx supabase db reset`, truncate tables, or delete existing values. Apply a pending migration with `npx supabase migration up`. If a task needs a missing value, insert only that row. Leave @supabase/seed.sql empty of domain data.
+- Preserve existing local Auth accounts, sessions, domain rows and Storage files. Never reset the database, truncate tables, remove Docker volumes, reload seeds or broadly delete data. Apply pending migrations with `npx supabase migration up`; insert only a missing value required by the task. Leave @supabase/seed.sql empty of domain data. Historical reset instructions are superseded by this rule.
+- Tests and manual agent checks use their own accounts and resources, never the developer’s account/session. Record ownership in `.test-runs/<run-id>.json` before creating resources, then clean only that run’s registered resources after success or failure. Never delete old fixtures by name/email prefix or remove a parent whose cascade includes unknown resources.
+- Mutating tests and cleanup require both the app and Supabase on literal loopback hosts (`localhost`, `127.0.0.1`, `::1`) and a matching environment. After interruption use `npm run test:cleanup -- <run-id>`; keep unresolved registries for retry. See @README.md.
 
 ## Build, test, and development
 
@@ -28,7 +30,7 @@ Node.js (@.nvmrc). Scripts, local Supabase, deploy, and lint-staged: @package.js
 
 ## Testing
 
-No unit or e2e runner is configured. @scripts/smoke.mjs and @README.md.
+Vitest in Node (`npm test`) uses HTTP against the running local app; @tests/support.ts provides shared fixtures. Smoke: `npm run smoke`. No e2e runner is configured. Follow the ownership/cleanup cookbook in @context/foundation/test-plan.md and @README.md.
 
 ## Commit and pull request
 

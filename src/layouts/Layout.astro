@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
+import TrainingReminder from "@/components/TrainingReminder.astro";
 import { missingConfigs } from "@/lib/config-status";
 
 interface Props {
@@ -78,5 +79,6 @@ const onApp =
     <div class="flex flex-1 flex-col">
       <slot />
     </div>
+    {user && <TrainingReminder />}
   </body>
 </html>

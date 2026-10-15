@@ -1,11 +1,29 @@
-// HTTP fixture for a running dev server. Inserts one team per run and leaves existing rows in place.
+// HTTP fixtures own their resources; managed teardown preserves preexisting local data.
 
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { testConfig, withTestResources, type TestResources } from "../scripts/test-resources.mjs";
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const runs = new AsyncLocalStorage<TestResources>();
+const users = new WeakMap<Map<string, string>, string>();
+const uploads = new Map<string, { run: TestResources; path: string }>();
+
+function currentRun(): TestResources {
+  const run = runs.getStore();
+  if (!run) throw new Error("Mutations require withTeamFixture");
+  return run;
+}
+
+export async function withTeamFixture(action: (team: TeamFixture, run: TestResources) => Promise<void>): Promise<void> {
+  await withTestResources(testConfig(baseUrl()), async (run) => {
+    // eslint-disable-next-line no-console -- The run ID enables interrupted-run cleanup.
+    console.log(`Test resource run: ${run.data.runId}`);
+    await runs.run(run, async () => {
+      await action(await createTeamFixture(), run);
+    });
+  });
+}
+
 const DEFAULT_BASE_URL = "http://localhost:4321";
 const PASSWORD = "Harness-Test-Passw0rd!";
 const PHOTO_CONFIG_ERROR = "Odczyt zdjęcia nie jest skonfigurowany.";
@@ -60,6 +78,29 @@ export function warsawToday(): string {
   }).format(new Date());
 }
 
+export function warsawYesterday(): string {
+  return previousCivilDate(warsawToday());
+}
+
+function previousCivilDate(civilDate: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(civilDate);
+  if (match === null) {
+    throw new Error("Could not read civil date");
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  if (utc.getUTCFullYear() !== year || utc.getUTCMonth() !== month - 1 || utc.getUTCDate() !== day) {
+    throw new Error("Could not read civil date");
+  }
+  utc.setUTCDate(day - 1);
+  const shiftedYear = utc.getUTCFullYear().toString().padStart(4, "0");
+  const shiftedMonth = (utc.getUTCMonth() + 1).toString().padStart(2, "0");
+  const shiftedDay = utc.getUTCDate().toString().padStart(2, "0");
+  return `${shiftedYear}-${shiftedMonth}-${shiftedDay}`;
+}
+
 export async function findTeamMemberByDisplayName(displayName: string): Promise<TeamMember | null> {
   const rows = readRows(
     await serviceGet(
@@ -76,15 +117,17 @@ export async function findTeamMemberByDisplayName(displayName: string): Promise<
   return readTeamMember(rows[0]);
 }
 
-export async function createTeamFixture(): Promise<TeamFixture> {
+async function createTeamFixture(): Promise<TeamFixture> {
   requireServiceConfig();
   await assertDevServerReachable();
   await assertServiceRole();
 
-  const runId = randomUUID();
+  const runId = currentRun().data.runId;
   const coach = await signUp(`coach-${runId}@example.com`, `Trener ${runId}`);
   const teamName = `Zespół ${runId}`;
-  await postForm(coach.jar, "/api/team", { team_name: teamName, display_name: coach.displayName }, "/dashboard");
+  await currentRun().createTeam(requireUser(coach.jar), () =>
+    postForm(coach.jar, "/api/team", { team_name: teamName, display_name: coach.displayName }, "/dashboard"),
+  );
   const dashboard = await request(coach.jar, "/dashboard");
   if (dashboard.status !== 200) {
     throw new Error(`Coach dashboard returned ${dashboard.status} ${dashboard.location}`);
@@ -99,6 +142,50 @@ export async function createTeamFixture(): Promise<TeamFixture> {
 }
 
 export async function request(
+  cookies: Map<string, string>,
+  path: string,
+  options: {
+    method?: string;
+    form?: Record<string, string>;
+    json?: Record<string, string | number | boolean | null>;
+  } = {},
+): Promise<HttpResponse> {
+  const run = currentRun();
+  const action = () => rawRequest(cookies, path, options);
+  const userId = users.get(cookies);
+  if (options.method === "POST" && path === "/api/trainings/create") {
+    const member = await run.rows("team_members", { user_id: requireUser(cookies) });
+    return run.capture(
+      "trainings",
+      { team_id: member[0].team_id, training_on: options.form?.training_on ?? "" },
+      action,
+    );
+  }
+  if (options.method === "POST" && path === "/api/trainings/photo/begin") {
+    const member = await run.rows("team_members", { user_id: requireUser(cookies) });
+    const training = readRows(
+      await serviceGet(
+        `trainings?select=id&${eqFilter("team_id", member[0].team_id)}&${eqFilter("training_on", String(options.json?.training_on))}`,
+      ),
+      "Training lookup",
+    );
+    if (training.length !== 1) throw new Error("Expected one owned training");
+    return run.capture(
+      "training_submissions",
+      { training_id: readString(training[0], "id"), user_id: userId ?? "" },
+      action,
+    );
+  }
+  return action();
+}
+
+function requireUser(cookies: Map<string, string>): string {
+  const userId = users.get(cookies);
+  if (!userId) throw new Error("Unknown fixture account");
+  return userId;
+}
+
+async function rawRequest(
   cookies: Map<string, string>,
   path: string,
   options: {
@@ -125,6 +212,7 @@ export async function request(
   const response = await fetch(baseUrl() + path, {
     method: options.method ?? "GET",
     redirect: "manual",
+    signal: AbortSignal.timeout(15_000),
     headers,
     body,
   });
@@ -142,7 +230,7 @@ export async function createTraining(
     cookies,
     "/api/trainings/create",
     { training_on: trainingOn, description },
-    `/calendar?date=${trainingOn}`,
+    `/calendar?created=${trainingOn}`,
   );
 }
 
@@ -161,6 +249,19 @@ export async function beginTrainingPhoto(cookies: Map<string, string>, trainingO
   if (signedUrl === null) {
     throw new Error("POST /api/trainings/photo/begin did not return signedUrl");
   }
+  const parsed = new URL(signedUrl);
+  const run = currentRun();
+  if (
+    parsed.origin !== run.config.url ||
+    parsed.username ||
+    parsed.password ||
+    !parsed.pathname.startsWith("/storage/v1/object/upload/sign/training-photos/")
+  ) {
+    throw new Error("Signed upload URL does not match local Supabase");
+  }
+  const path = decodeURIComponent(parsed.pathname.slice("/storage/v1/object/upload/sign/training-photos/".length));
+  if (!run.ownsPath(path)) throw new Error("Unowned signed upload path");
+  uploads.set(signedUrl, { run, path });
   return signedUrl;
 }
 
@@ -171,7 +272,11 @@ export async function uploadTrainingPhoto(signedUrl: string): Promise<void> {
   body.append("", file);
   let response: Response;
   try {
-    response = await fetch(signedUrl, { method: "PUT", body });
+    const upload = uploads.get(signedUrl);
+    if (upload?.run !== currentRun()) throw new Error("Unknown signed upload");
+    response = await upload.run.upload(upload.path, () =>
+      fetch(signedUrl, { method: "PUT", body, redirect: "manual", signal: AbortSignal.timeout(15_000) }),
+    );
   } catch (error: unknown) {
     const reason = error instanceof Error ? error.message : "connection failed";
     throw new Error(`Signed photo upload failed (${reason})`, { cause: error });
@@ -190,6 +295,8 @@ export async function recordTrainingReadout(input: {
   durationSeconds: null;
   maxSpeedKmh: null;
 }): Promise<void> {
+  const run = currentRun();
+  if (!run.ownsUser(input.userId)) throw new Error("Readout requires a registered fixture account");
   await serviceRpc("record_training_readout", {
     user_id: input.userId,
     training_on: input.trainingOn,
@@ -219,6 +326,67 @@ export async function confirmTrainingPhoto(
   });
   if (result.status !== 200) {
     throw new Error(`POST /api/trainings/photo/confirm returned ${result.status} ${readFailureText(result.body)}`);
+  }
+}
+
+export async function insertTraining(input: {
+  teamId: string;
+  trainingOn: string;
+  description: string;
+}): Promise<string> {
+  const id = randomUUID();
+  const row = readInsertedRow(
+    await currentRun().capture("trainings", { id }, () =>
+      servicePost("trainings", {
+        id,
+        team_id: input.teamId,
+        training_on: input.trainingOn,
+        description: input.description,
+      }),
+    ),
+    "Training insert",
+  );
+  if (readString(row, "id") !== id || readString(row, "team_id") !== input.teamId) {
+    throw new Error("Training insert did not return the inserted row");
+  }
+  if (readString(row, "training_on") !== input.trainingOn || readString(row, "description") !== input.description) {
+    throw new Error("Training insert did not return the inserted row");
+  }
+  return id;
+}
+
+export async function insertConfirmedSubmission(input: {
+  trainingId: string;
+  userId: string;
+  storagePath: string;
+  distanceKm: number;
+  confirmedAt: string;
+  submitterDisplayName: string;
+}): Promise<void> {
+  const row = readInsertedRow(
+    await currentRun().capture("training_submissions", { training_id: input.trainingId, user_id: input.userId }, () =>
+      servicePost("training_submissions", {
+        training_id: input.trainingId,
+        user_id: input.userId,
+        storage_path: input.storagePath,
+        distance_km: input.distanceKm,
+        confirmed_at: input.confirmedAt,
+        submitter_display_name: input.submitterDisplayName,
+      }),
+    ),
+    "Training submission insert",
+  );
+  if (readString(row, "training_id") !== input.trainingId || readString(row, "user_id") !== input.userId) {
+    throw new Error("Training submission insert did not return the inserted row");
+  }
+  if (readString(row, "storage_path") !== input.storagePath) {
+    throw new Error("Training submission insert did not return the inserted row");
+  }
+  if (readString(row, "submitter_display_name") !== input.submitterDisplayName) {
+    throw new Error("Training submission insert did not return the inserted row");
+  }
+  if (readString(row, "confirmed_at").trim() === "") {
+    throw new Error("Training submission insert did not return the inserted row");
   }
 }
 
@@ -275,7 +443,7 @@ function httpOrigin(value: string | undefined): string | undefined {
 async function assertDevServerReachable(): Promise<void> {
   const address = baseUrl();
   try {
-    await fetch(address, { redirect: "manual" });
+    await fetch(address, { redirect: "manual", signal: AbortSignal.timeout(15_000) });
   } catch (error: unknown) {
     const reason = error instanceof Error ? error.message : "connection failed";
     throw new Error(`Dev server is not reachable at ${address} (${reason})`, { cause: error });
@@ -297,13 +465,18 @@ async function createAthlete(
 ): Promise<SignedInUser> {
   const displayName = `${givenName} ${runId}`;
   const athlete = await signUp(`${givenName.toLowerCase()}-${runId}@example.com`, displayName);
-  await postForm(athlete.jar, "/api/team/join", { join_code: teamCode, display_name: displayName }, "/dashboard");
+  await currentRun().capture("team_members", { user_id: requireUser(athlete.jar) }, () =>
+    postForm(athlete.jar, "/api/team/join", { join_code: teamCode, display_name: displayName }, "/dashboard"),
+  );
   return athlete;
 }
 
 async function signUp(email: string, displayName: string): Promise<SignedInUser> {
   const jar = new Map<string, string>();
-  await postForm(jar, "/api/auth/signup", { email, password: PASSWORD }, "/auth/confirm-email");
+  const { userId } = await currentRun().signup(email, PASSWORD, () =>
+    postForm(jar, "/api/auth/signup", { email, password: PASSWORD }, "/auth/confirm-email"),
+  );
+  users.set(jar, userId);
   await postForm(jar, "/api/auth/signin", { email, password: PASSWORD }, "/");
   return { email, displayName, jar };
 }
@@ -360,97 +533,13 @@ function storeCookies(cookies: Map<string, string>, response: Response): void {
   }
 }
 
-let serviceEnvLoaded = false;
-
-function loadServiceEnv(): void {
-  if (serviceEnvLoaded) {
-    return;
-  }
-  applyEnvFile(resolve(repoRoot, ".env"));
-  applyEnvFile(resolve(repoRoot, ".dev.vars"));
-  serviceEnvLoaded = true;
-}
-
-function applyEnvFile(filePath: string): void {
-  let text: string;
-  try {
-    text = readFileSync(filePath, "utf8");
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      return;
-    }
-    throw error;
-  }
-  for (const line of text.split(/\r?\n/u)) {
-    applyEnvLine(line);
-  }
-}
-
-function applyEnvLine(line: string): void {
-  const trimmed = line.trim();
-  if (trimmed === "" || trimmed.startsWith("#")) {
-    return;
-  }
-  const withoutExport = trimmed.startsWith("export ") ? trimmed.slice("export ".length).trim() : trimmed;
-  const separator = withoutExport.indexOf("=");
-  if (separator <= 0) {
-    return;
-  }
-  const key = withoutExport.slice(0, separator).trim();
-  if (key !== "SUPABASE_URL" && key !== "SUPABASE_SERVICE_ROLE") {
-    return;
-  }
-  if (nonEmpty(process.env[key]) !== undefined) {
-    return;
-  }
-  const value = nonEmpty(unquote(withoutExport.slice(separator + 1)));
-  if (value === undefined) {
-    return;
-  }
-  process.env[key] = value;
-}
-
-function unquote(value: string): string {
-  const trimmed = value.trim();
-  const doubleQuoted = trimmed.startsWith('"') && trimmed.endsWith('"');
-  const singleQuoted = trimmed.startsWith("'") && trimmed.endsWith("'");
-  if ((doubleQuoted || singleQuoted) && trimmed.length >= 2) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
-}
-
 function nonEmpty(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
-  if (trimmed === undefined || trimmed === "") {
-    return undefined;
-  }
-  return trimmed;
-}
-
-function isEnoent(error: unknown): boolean {
-  if (typeof error !== "object" || error === null || !Object.hasOwn(error, "code")) {
-    return false;
-  }
-  const code: unknown = Object.getOwnPropertyDescriptor(error, "code")?.value;
-  return code === "ENOENT";
+  return trimmed === "" ? undefined : trimmed;
 }
 
 function requireServiceConfig(): { url: string; serviceRole: string } {
-  loadServiceEnv();
-  const url = nonEmpty(process.env.SUPABASE_URL);
-  const serviceRole = nonEmpty(process.env.SUPABASE_SERVICE_ROLE);
-  const missing: string[] = [];
-  if (url === undefined) {
-    missing.push("SUPABASE_URL");
-  }
-  if (serviceRole === undefined) {
-    missing.push("SUPABASE_SERVICE_ROLE");
-  }
-  if (url === undefined || serviceRole === undefined) {
-    throw new Error(`Missing ${missing.join(" and ")}. Set them in the environment, .env, or .dev.vars.`);
-  }
-  return { url, serviceRole };
+  return testConfig(baseUrl());
 }
 
 async function serviceGet(pathAndQuery: string): Promise<unknown> {
@@ -460,6 +549,7 @@ async function serviceGet(pathAndQuery: string): Promise<unknown> {
   try {
     response = await fetch(`${base}/rest/v1/${pathAndQuery}`, {
       redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
       headers: {
         Accept: "application/json",
         apikey: serviceRole,
@@ -536,6 +626,46 @@ function readString(row: unknown, key: string): string {
   return value;
 }
 
+async function servicePost(table: string, row: Record<string, string | number | boolean | null>): Promise<unknown> {
+  const { url, serviceRole } = requireServiceConfig();
+  const base = url.endsWith("/") ? url.slice(0, -1) : url;
+  let response: Response;
+  try {
+    response = await fetch(`${base}/rest/v1/${table}`, {
+      method: "POST",
+      redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+        apikey: serviceRole,
+        Authorization: `Bearer ${serviceRole}`,
+      },
+      body: JSON.stringify(row),
+    });
+  } catch (error: unknown) {
+    const reason = error instanceof Error ? error.message : "connection failed";
+    throw new Error(`Service role request failed (${reason})`, { cause: error });
+  }
+  if (response.status >= 300 && response.status < 400) {
+    throw new Error(`Service role request failed with status ${response.status}`);
+  }
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Service role request failed: ${readFailureText(text)}`);
+  }
+  return text === "" ? null : parseJson(text);
+}
+
+function readInsertedRow(body: unknown, label: string): unknown {
+  const rows = readRows(body, label);
+  if (rows.length !== 1) {
+    throw new Error(`${label} did not return the inserted row`);
+  }
+  return rows[0];
+}
+
 async function serviceRpc(name: string, args: Record<string, string | number | boolean | null>): Promise<void> {
   const { url, serviceRole } = requireServiceConfig();
   const base = url.endsWith("/") ? url.slice(0, -1) : url;
@@ -544,6 +674,7 @@ async function serviceRpc(name: string, args: Record<string, string | number | b
     response = await fetch(`${base}/rest/v1/rpc/${name}`, {
       method: "POST",
       redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",

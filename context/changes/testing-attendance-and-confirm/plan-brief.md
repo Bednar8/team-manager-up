@@ -1,3 +1,5 @@
+> **Aktualizacja kontraktu (2026-10-15):** `context/changes/preserve-local-test-data/plan.md` zastępuje instrukcje pozostawiania fixture i ręcznego logowania na konta ostatniego przebiegu. Nowe testy rejestrują własne zasoby i sprzątają je po sukcesie lub błędzie, zachowując wcześniejsze dane; po przerwaniu użyj `npm run test:cleanup -- <run-id>`. Poniższe kroki i Progress są historycznym zapisem i pozostają bez zmian.
+
 # Lista oddanych i zapis potwierdzenia — Plan Brief
 
 > Full plan: `context/changes/testing-attendance-and-confirm/plan.md`

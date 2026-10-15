@@ -1,5 +1,5 @@
 ---
-description: Keep local Supabase row values; insert only what a task needs
+description: Preserve existing local accounts, rows and Storage; clean only registered test resources
 alwaysApply: true
 ---
 
@@ -10,5 +10,11 @@ The local Supabase database holds the developer's working rows (auth users, team
 - Do not run `npx supabase db reset` or `supabase db reset`.
 - Do not `TRUNCATE` a table, drop its rows, or `DELETE` existing values to get a clean database.
 - Apply a pending migration with `npx supabase migration up`. That leaves existing rows in place.
-- When a task needs a value that is missing, insert or update only that value. Leave every other local row untouched.
+- When a task needs a value that is missing, insert only that value. Leave every other local row untouched.
 - Leave `supabase/seed.sql` empty of domain data. Do not reload the database from a seed file.
+
+- Preserve existing Auth accounts, sessions and Storage objects as well as domain rows. Never remove Docker volumes to prepare a test. Historical reset instructions do not override these rules.
+- Automated tests and manual agent checks must use their own accounts and resources, not the developer’s account or browser session. Record exact ownership and relations in `.test-runs/<run-id>.json` before creation; never persist secrets there.
+- Clean only the current run’s registered resources after success or failure: Storage objects, dependent domain rows, then Auth users. Check cascades before deleting parents; unknown ownership means refuse and report an error. Never find old fixtures by email/name prefix for deletion.
+- Mutating tests require the app and Supabase on literal loopback hosts (`localhost`, `127.0.0.1`, `::1`) and the same verified local environment. Remote configurations must fail before writing.
+- After an interrupted process, find its UUID in `.test-runs/` and run `npm run test:cleanup -- <run-id>`. This retries only that run; preserve unresolved registries for another attempt. See `README.md` and `context/foundation/test-plan.md`.
