@@ -204,11 +204,11 @@ Nakładaj `npx supabase migration up`. Nie uruchamiaj `supabase db reset` i nie 
 
 #### Automated
 
-- [x] 2.1 `npm test` dla kalendarza zawodnika w dniu potwierdzonego treningu zawiera `Podmień zdjęcie` i `Usuń zdjęcie`, a dla wczorajszego dnia tych napisów nie ma
-- [x] 2.2 `npm test` przechodzi
-- [x] 2.3 `npm run lint` przechodzi
+- [x] 2.1 `npm test` dla kalendarza zawodnika w dniu potwierdzonego treningu zawiera `Podmień zdjęcie` i `Usuń zdjęcie`, a dla wczorajszego dnia tych napisów nie ma — 70ae0a4
+- [x] 2.2 `npm test` przechodzi — 70ae0a4
+- [x] 2.3 `npm run lint` przechodzi — 70ae0a4
 
 #### Manual
 
-- [x] 2.4 Zawodnik na telefonie w dniu treningu podmienia zdjęcie, potwierdza nowy odczyt i widzi swoje przesunięte miejsce w rankingu
-- [x] 2.5 Zawodnik usuwa zdjęcie, trener widzi przy nim `Nie oddał` i nie ma podglądu tego pliku, a po północy warszawskiej oba napisy znikają
+- [x] 2.4 Zawodnik na telefonie w dniu treningu podmienia zdjęcie, potwierdza nowy odczyt i widzi swoje przesunięte miejsce w rankingu — 70ae0a4
+- [x] 2.5 Zawodnik usuwa zdjęcie, trener widzi przy nim `Nie oddał` i nie ma podglądu tego pliku, a po północy warszawskiej oba napisy znikają — 70ae0a4
