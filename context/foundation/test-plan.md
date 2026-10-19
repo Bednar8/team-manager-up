@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-10-15
+> Last updated: 2026-10-19
 
 ## 1. Strategy
 
@@ -26,10 +26,10 @@ Najważniejsze scenariusze awarii, od najwyższego iloczynu skutku i szansy. Kol
 | --- | --------------------------------------------------------------------------------------------------------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Trener widzi złą listę: potwierdzone zgłoszenie jest „nie oddał”, albo „oddał” bez potwierdzenia                | Wysoki | Wysoka  | wywiad Q1; PRD FR-008, US-01; `context/archive/2026-10-02-coach-sees-submissions/plan.md`                                             |
 | 2   | Potwierdzenie nie zapisuje zgłoszenia albo zapisuje inne kilometry niż te, które zawodnik zatwierdził           | Wysoki | Wysoka  | wywiad Q3; PRD FR-007, FR-013; `context/archive/2026-10-01-photo-readout-confirm/plan.md`                                             |
-| 3   | Ranking sumuje złe kilometry, złe osoby albo trening, który nie powinien wejść do sumy                          | Wysoki | Średnia | PRD US-01, FR-010, FR-011, FR-014; `context/foundation/roadmap.md` S-04; archiwum rankingu opisuje jeszcze publikację następnego dnia |
+| 3   | Ranking sumuje złe kilometry, złe osoby albo trening, który nie powinien wejść do sumy                          | Wysoki | Średnia | PRD US-01, FR-010, FR-011, FR-014; roadmap S-04 (kilometry od razu, także z dziś); archiwum rankingu zostawia zdanie o publikacji następnego dnia |
 | 4   | Zgłoszenie przechodzi bez kilometrów, w dniu bez treningu albo jako drugie zdjęcie                              | Wysoki | Średnia | PRD FR-005, FR-006 i guardrail; wywiad Q3; `context/archive/2026-10-01-photo-readout-confirm/plan.md`                                 |
 | 5   | Ktoś spoza zespołu albo inny zawodnik widzi zdjęcie lub sięga po cudze zgłoszenie                               | Wysoki | Średnia | PRD: zdjęcie niewidoczne poza zespołem; Access Control; `context/archive/2026-10-02-coach-sees-submissions/plan.md`                   |
-| 6   | Trening wsteczny, drugi trening tego samego dnia albo skasowanie treningu ze zgłoszeniami psuje listę i ranking | Średni | Średnia | PRD FR-001–FR-003; hot-spot `src/components/calendar/` (10 zmian/30 dni), `src/pages/` (22 zmian/30 dni)                              |
+| 6   | Trening wsteczny albo drugi trening tego dnia psuje zapis; usunięcie dziś lub później kasuje zgłoszenia razem z treningiem | Średni | Średnia | PRD FR-001–FR-003; hot-spot `src/components/calendar/` (10 zmian/30 dni), `src/pages/` (22 zmian/30 dni)                              |
 
 ### Risk Response Guidance
 
@@ -37,10 +37,10 @@ Najważniejsze scenariusze awarii, od najwyższego iloczynu skutku i szansy. Kol
 | ------ | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | #1     | Przy treningu na dziś lub wstecz trener widzi „oddał” tylko przy potwierdzonym zgłoszeniu, a resztę składu jako „nie oddał” | Samo wgranie zdjęcia oznacza „oddał”                | Skąd bierze się status, kiedy lista w ogóle jest i kto zostaje na liście po wyjściu ze składu | Integracja na odczycie listy                        | Jedna szczęśliwa ścieżka; asercja skopiowana z widoku                                |
 | #2     | Po potwierdzeniu zapis ma dokładnie zatwierdzone kilometry tego zawodnika i tego treningu                                   | Wyświetlony odczyt albo status 200 oznacza zapis    | Kolejność wgranie, odczyt i potwierdzenie oraz co zostaje w danych                            | Integracja ze sztucznym odczytem, bez żywego modelu | Test jakości OCR; oczekiwana liczba wzięta z parsera                                 |
-| #3     | Suma to potwierdzone kilometry właściwych osób; brak zgłoszenia to 0 km; miejsca przy remisie są zgodne z PRD               | Suma wszystkich kilometrów w tabeli jest rankingiem | Które wiersze wchodzą do sumy, jak liczy się „dziś” w Warszawie i czy trener jest na liście   | Integracja na odczycie rankingu z ustaloną datą     | Wyrocznia skopiowana z funkcji liczącej; stary scenariusz publikacji następnego dnia |
-| #4     | Brak kilometrów, 0 km, dzień bez treningu i drugie zdjęcie po potwierdzeniu nie dają drugiego oddania                       | Blokada w formularzu wystarcza                      | Gdzie serwer odrzuca te przypadki i co zostaje zapisane                                       | Integracja ścieżek odrzucenia                       | Sam happy path jednego zdjęcia                                                       |
+| #3     | Suma to potwierdzone kilometry zawodników tego zespołu z treningów do warszawskiego dnia odczytu włącznie; brak takiego wiersza daje 0 km i nie kasuje wcześniejszych kilometrów; trenera nie ma na liście. Remis nie ma reguły w PRD | Suma wszystkich kilometrów w tabeli jest rankingiem | Do sumy wchodzą potwierdzone kilometry zawodników do warszawskiego dnia odczytu włącznie; trener jest poza listą; niepotwierdzony odczyt nie wchodzi | Integracja na odczycie rankingu; dzień liczy się w chwili odczytu, nie jako argument wywołania | Wyrocznia skopiowana z funkcji liczącej; stary scenariusz publikacji następnego dnia |
+| #4     | Brak kilometrów i 0 km zostawiają istniejący niepotwierdzony wiersz bez potwierdzenia; warszawski dzień bez treningu nic nie wstawia; drugie rozpoczęcie po potwierdzeniu nie wstawia drugiego wiersza | Blokada w formularzu wystarcza                      | Gdzie serwer odrzuca te przypadki i co zostaje zapisane                                       | Integracja ścieżek odrzucenia                       | Sam happy path jednego zdjęcia                                                       |
 | #5     | Zdjęcie i zgłoszenie nie są dostępne dla innego zespołu, zawodnika bez uprawnienia ani sesji                                | Zalogowanie wystarcza, skoro trasa jest chroniona   | Czy sprawdzenie dotyczy własności zasobu, nie tylko sesji                                     | Integracja dwóch kont i dwóch zespołów              | Test właściciela bez przypadku cudzego identyfikatora                                |
-| #6     | Data wsteczna, drugi trening tego dnia i usunięcie treningu ze zgłoszeniami są odrzucone                                    | Spójny kalendarz w UI oznacza spójny zapis          | Gdzie reguła daty jest egzekwowana i co dzieje się ze zgłoszeniami                            | Integracja zapisu treningu                          | Snapshot wyglądu kalendarza                                                          |
+| #6     | Data wsteczna i drugi trening tego dnia są odrzucone. Usunięcie daty wcześniejszej niż warszawskie dziś jest odrzucone. Usunięcie dziś lub później nie sprawdza zgłoszeń i kasuje je razem z treningiem | Spójny kalendarz w UI oznacza spójny zapis          | Reguła daty odrzuca wstecz i duplikat dnia. Usunięcie nie czyta zgłoszeń: dziś i przyszłość kasują je kaskadą, wbrew FR-002 dla dziś | Integracja zapisu treningu                          | Snapshot wyglądu kalendarza                                                          |
 
 ## 3. Phased Rollout
 
@@ -48,8 +48,8 @@ Każdy wiersz otworzy własny folder zmiany przez `/10x-new`. Status idzie w pra
 
 | #   | Phase name                            | Goal (one line)                                                                | Risks covered | Test types                 | Status        | Change folder                                   |
 | --- | ------------------------------------- | ------------------------------------------------------------------------------ | ------------- | -------------------------- | ------------- | ----------------------------------------------- |
-| 1   | Lista kto oddał i zapis potwierdzenia | Postawić runner i udowodnić listę trenera oraz zapis zatwierdzonych kilometrów | #1, #2        | start runnera + integracja | change opened | context/changes/testing-attendance-and-confirm/ |
-| 2   | Ranking i reguły zgłoszenia oraz daty | Udowodnić sumę kilometrów oraz odrzucenie zgłoszenia i treningu poza regułami  | #3, #4, #6    | integracja                 | not started   | —                                               |
+| 1   | Lista kto oddał i zapis potwierdzenia | Postawić runner i udowodnić listę trenera oraz zapis zatwierdzonych kilometrów | #1, #2        | start runnera + integracja | complete      | context/archive/2026-10-05-testing-attendance-and-confirm/ |
+| 2   | Ranking i reguły zgłoszenia oraz daty | Udowodnić sumę kilometrów oraz odrzucenie zgłoszenia i treningu poza regułami  | #3, #4, #6    | integracja                 | planned       | context/changes/testing-ranking-submission-and-dates/          |
 | 3   | Cudzy dostęp do zdjęcia i zgłoszenia  | Udowodnić, że sesja nie wystarcza do cudzego zdjęcia ani zgłoszenia            | #5            | integracja uprawnień       | not started   | —                                               |
 | 4   | Bramka testów w CI                    | Uruchamiać zestaw z faz 1–3 obok lintu, buildu i smoke                         | przekrojowe   | bramka                     | not started   | —                                               |
 
@@ -119,6 +119,7 @@ Jak dokładać testy. Podsekcje wypełnią się, gdy wyląduje dana faza. Do teg
 - Lokalny storage-api v1.72.1 kończy podpisany upload przez `INSERT ... ON CONFLICT (name, bucket_id)`. W tej bazie były tylko częściowe unikalne indeksy na `(bucket_id, name)`, więc PUT zwracał Postgres `42P10`.
 - W lokalnej bazie powstał nieczęściowy unikalny indeks `objects_name_bucket_id_key` na `storage.objects (name, bucket_id)`. To nie jest migracja w repozytorium.
 - Test dnia minionego nie wgrywa obiektu.
+- Faza 1 zamknięta 2026-10-19. Kroki automatyczne są wykonane. Pięć ręcznych wierszy Progress w archiwum zostaje odhaczonych, bo nagłówek planu z 2026-10-15 uznaje je za zapis historyczny: konta przebiegu są sprzątane, a ręczna weryfikacja idzie na wcześniejsze konto użytkownika, nie na fixture ostatniego testu.
 
 ## 7. What We Deliberately Don't Test
 
