@@ -3,7 +3,7 @@ project: "Team Manager"
 version: 1
 status: draft
 created: 2026-09-26
-updated: 2026-10-03
+updated: 2026-10-19
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -49,7 +49,7 @@ Potwierdzone kilometry wchodzą do rankingu od razu po zatwierdzeniu zgłoszenia
 | S-03 | photo-readout-confirm     | zawodnik wgrywa jedno zdjęcie w dniu treningu, widzi odczyt i potwierdza dane                | S-01, S-02    | FR-005, FR-006, FR-007, FR-013, US-01         | done |
 | S-04 | km-ranking-publication    | trener i zawodnik widzą ranking po kilometrach, z 0 km bez zgłoszenia                        | S-03          | FR-010, FR-011, FR-014, US-01                 | done |
 | S-05 | coach-sees-submissions    | trener widzi, kto oddał zdjęcie, a kto nie, i może podejrzeć przesłane                       | S-03          | FR-008, US-01                                 | done |
-| S-06 | athlete-photo-edit-window | zawodnik zmienia albo usuwa swoje zdjęcie, dopóki nie ma następnego dnia                     | S-03          | FR-009                                        | proposed |
+| S-06 | athlete-photo-edit-window | zawodnik zmienia albo usuwa swoje zdjęcie, dopóki nie ma następnego dnia                     | S-03          | FR-009                                        | in-progress |
 
 ## Baseline
 
@@ -151,7 +151,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Okno poprawki zmienia kilometry, które wejdą do rankingu, dlatego ląduje obok S-04, a nie przed odczytem. Zamknięcie okna wynika z FR-009 (brak następnego dnia). Poprawka tego samego dnia przesuwa miejsca od razu.
-- **Status:** proposed
+- **Status:** in-progress
 
 ## Backlog Handoff
 
