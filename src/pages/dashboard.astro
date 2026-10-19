@@ -116,6 +116,34 @@ function readMembers(
             </a>
           </div>
           <p id="copy-team-code-status" role="status" class="text-muted-foreground text-sm"></p>
+          <script is:inline>
+            const copyButton = document.querySelector("#copy-team-code");
+            const copyStatus = document.querySelector("#copy-team-code-status");
+            const code = document.querySelector("[data-team-code]")?.dataset.teamCode;
+
+            if (copyButton && copyStatus && code) {
+              let resetTimer;
+              copyButton.addEventListener("click", async () => {
+                window.clearTimeout(resetTimer);
+                copyButton.disabled = true;
+                copyStatus.textContent = "";
+                try {
+                  await navigator.clipboard.writeText(code);
+                  copyButton.textContent = "Skopiowano!";
+                  copyStatus.textContent = "Kod zespołu skopiowany do schowka.";
+                  resetTimer = setTimeout(() => {
+                    copyButton.textContent = "Kopiuj kod";
+                    copyStatus.textContent = "";
+                  }, 2500);
+                } catch {
+                  copyButton.textContent = "Kopiuj kod";
+                  copyStatus.textContent = "Nie udało się skopiować. Zaznacz kod i skopiuj go ręcznie.";
+                } finally {
+                  copyButton.disabled = false;
+                }
+              });
+            }
+          </script>
         </div>
       )}
       <div class="mt-6 space-y-6">
@@ -153,32 +181,3 @@ function readMembers(
     </div>
   </main>
 </TeamShell>
-
-<script>
-  const copyButton = document.querySelector<HTMLButtonElement>("#copy-team-code");
-  const copyStatus = document.querySelector<HTMLParagraphElement>("#copy-team-code-status");
-  const code = document.querySelector<HTMLElement>("[data-team-code]")?.dataset.teamCode;
-
-  if (copyButton && copyStatus && code) {
-    let resetTimer: ReturnType<typeof setTimeout> | undefined;
-    copyButton.addEventListener("click", async () => {
-      window.clearTimeout(resetTimer);
-      copyButton.disabled = true;
-      copyStatus.textContent = "";
-      try {
-        await navigator.clipboard.writeText(code);
-        copyButton.textContent = "Skopiowano!";
-        copyStatus.textContent = "Kod zespołu skopiowany do schowka.";
-        resetTimer = setTimeout(() => {
-          copyButton.textContent = "Kopiuj kod";
-          copyStatus.textContent = "";
-        }, 2500);
-      } catch {
-        copyButton.textContent = "Kopiuj kod";
-        copyStatus.textContent = "Nie udało się skopiować. Zaznacz kod i skopiuj go ręcznie.";
-      } finally {
-        copyButton.disabled = false;
-      }
-    });
-  }
-</script>
