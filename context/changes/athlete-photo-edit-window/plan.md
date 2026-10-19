@@ -192,23 +192,23 @@ Nakładaj `npx supabase migration up`. Nie uruchamiaj `supabase db reset` i nie 
 
 #### Automated
 
-- [x] 1.1 `npx supabase migration up` nakłada `20261019120000_athlete_photo_edit_window.sql` i nie czyści istniejących wierszy
-- [x] 1.2 `npm test` dla podmiany w warszawskim dniu treningu zdejmuje `confirmed_at` przy drugim `begin`, a ponowne potwierdzenie z innym `distance_km` zmienia sumę w rankingu
-- [x] 1.3 `npm test` dla usunięcia w tym samym dniu kasuje wiersz zgłoszenia: ranking pokazuje `0 km`, a kalendarz trenera mówi `Nie oddał`
-- [x] 1.4 `npm test` zostawia otwarte okno, gdy trener ma już trening na jutro
-- [x] 1.5 `npm test` dla wczorajszego potwierdzonego zgłoszenia odrzuca `begin` i usunięcie zdaniem `Zdjęcie można wgrać tylko w dniu treningu.` i zostawia wiersz
-- [x] 1.6 `npm test` dla trenera i drugiego zawodnika nie usuwa wiersza właściciela
-- [x] 1.7 `npm run lint` przechodzi
+- [x] 1.1 `npx supabase migration up` nakłada `20261019120000_athlete_photo_edit_window.sql` i nie czyści istniejących wierszy — a2000d5
+- [x] 1.2 `npm test` dla podmiany w warszawskim dniu treningu zdejmuje `confirmed_at` przy drugim `begin`, a ponowne potwierdzenie z innym `distance_km` zmienia sumę w rankingu — a2000d5
+- [x] 1.3 `npm test` dla usunięcia w tym samym dniu kasuje wiersz zgłoszenia: ranking pokazuje `0 km`, a kalendarz trenera mówi `Nie oddał` — a2000d5
+- [x] 1.4 `npm test` zostawia otwarte okno, gdy trener ma już trening na jutro — a2000d5
+- [x] 1.5 `npm test` dla wczorajszego potwierdzonego zgłoszenia odrzuca `begin` i usunięcie zdaniem `Zdjęcie można wgrać tylko w dniu treningu.` i zostawia wiersz — a2000d5
+- [x] 1.6 `npm test` dla trenera i drugiego zawodnika nie usuwa wiersza właściciela — a2000d5
+- [x] 1.7 `npm run lint` przechodzi — a2000d5
 
 ### Phase 2: Przyciski w kalendarzu
 
 #### Automated
 
-- [ ] 2.1 `npm test` dla kalendarza zawodnika w dniu potwierdzonego treningu zawiera `Podmień zdjęcie` i `Usuń zdjęcie`, a dla wczorajszego dnia tych napisów nie ma
-- [ ] 2.2 `npm test` przechodzi
-- [ ] 2.3 `npm run lint` przechodzi
+- [x] 2.1 `npm test` dla kalendarza zawodnika w dniu potwierdzonego treningu zawiera `Podmień zdjęcie` i `Usuń zdjęcie`, a dla wczorajszego dnia tych napisów nie ma
+- [x] 2.2 `npm test` przechodzi
+- [x] 2.3 `npm run lint` przechodzi
 
 #### Manual
 
-- [ ] 2.4 Zawodnik na telefonie w dniu treningu podmienia zdjęcie, potwierdza nowy odczyt i widzi swoje przesunięte miejsce w rankingu
-- [ ] 2.5 Zawodnik usuwa zdjęcie, trener widzi przy nim `Nie oddał` i nie ma podglądu tego pliku, a po północy warszawskiej oba napisy znikają
+- [x] 2.4 Zawodnik na telefonie w dniu treningu podmienia zdjęcie, potwierdza nowy odczyt i widzi swoje przesunięte miejsce w rankingu
+- [x] 2.5 Zawodnik usuwa zdjęcie, trener widzi przy nim `Nie oddał` i nie ma podglądu tego pliku, a po północy warszawskiej oba napisy znikają

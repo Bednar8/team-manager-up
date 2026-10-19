@@ -290,6 +290,63 @@ test(
   TEST_TIMEOUT_MS,
 );
 
+test(
+  "an athlete's calendar shows Podmień zdjęcie and Usuń zdjęcie on today's confirmed photo, not yesterday",
+  () =>
+    withTeamFixture(async (team) => {
+      const today = warsawToday();
+      const yesterday = warsawYesterday();
+      const confirmingName = `Potwierdza ${team.runId}`;
+      const confirmingUser = team.athletes[0];
+
+      expect(team.athletes.map((athlete) => athlete.displayName)).toEqual([
+        confirmingName,
+        `Wgrywa ${team.runId}`,
+        `Milczy ${team.runId}`,
+      ]);
+
+      const confirming = requireMember(await findTeamMemberByDisplayName(confirmingName), confirmingName);
+      const todayTrainingId = await insertTraining({
+        teamId: confirming.teamId,
+        trainingOn: today,
+        description: "Bieg na dziś",
+      });
+      await insertConfirmedSubmission({
+        trainingId: todayTrainingId,
+        userId: confirming.userId,
+        storagePath: `${confirming.teamId}/${todayTrainingId}/${confirming.userId}`,
+        distanceKm: 5,
+        confirmedAt: new Date().toISOString(),
+        submitterDisplayName: confirmingName,
+      });
+      const yesterdayTrainingId = await insertTraining({
+        teamId: confirming.teamId,
+        trainingOn: yesterday,
+        description: "Bieg wsteczny",
+      });
+      await insertConfirmedSubmission({
+        trainingId: yesterdayTrainingId,
+        userId: confirming.userId,
+        storagePath: `${confirming.teamId}/${yesterdayTrainingId}/${confirming.userId}`,
+        distanceKm: 1,
+        confirmedAt: new Date().toISOString(),
+        submitterDisplayName: confirmingName,
+      });
+
+      const todayCalendar = await request(confirmingUser.jar, `/calendar?date=${today}`);
+      expect(todayCalendar.status).toBe(200);
+      expect(todayCalendar.body).toContain("Podmień zdjęcie");
+      expect(todayCalendar.body).toContain("Usuń zdjęcie");
+
+      const yesterdayCalendar = await request(confirmingUser.jar, `/calendar?date=${yesterday}`);
+      expect(yesterdayCalendar.status).toBe(200);
+      expect(yesterdayCalendar.body).toContain("Bieg wsteczny");
+      expect(yesterdayCalendar.body).not.toContain("Podmień zdjęcie");
+      expect(yesterdayCalendar.body).not.toContain("Usuń zdjęcie");
+    }),
+  TEST_TIMEOUT_MS,
+);
+
 function paragraphPattern(text: "0 km" | "4 km"): RegExp {
   return new RegExp(`<p[^>]*>\\s*${text}\\s*</p>`, "u");
 }

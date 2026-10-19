@@ -88,6 +88,7 @@ const fileClassName =
 const READOUT_FAILED = "Nie udało się odczytać zdjęcia. Wpisz dane albo wgraj inne.";
 const UPLOAD_FAILED = "Nie udało się wgrać zdjęcia.";
 const CONFIRM_FAILED = "Nie udało się potwierdzić.";
+const DELETE_FAILED = "Nie udało się usunąć zdjęcia.";
 const PREVIEW_FAILED = "Nie udało się otworzyć zdjęcia.";
 const COACH_SEES_EDIT = "Trener zobaczy, że poprawiłeś odczyt.";
 
@@ -154,11 +155,15 @@ export default function MonthCalendar({
   const [photo, setPhoto] = useState<PhotoAttempt | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [deletingPhotoDate, setDeletingPhotoDate] = useState<string | null>(null);
+  const [photoDeleteError, setPhotoDeleteError] = useState<{ date: string; message: string } | null>(null);
+  const [removedPhotoDate, setRemovedPhotoDate] = useState<string | null>(null);
   const [coachPreview, setCoachPreview] = useState<CoachPreview | null>(null);
   const photoAttempt = useRef(0);
   const confirmAttempt = useRef(0);
   const coachPreviewAttempt = useRef(0);
   const confirmLock = useRef(false);
+  const deleteLock = useRef(false);
   const entryDate = initialDate ?? null;
   const visible = paged ?? (today ? civilMonthOf(today) : null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -337,6 +342,7 @@ export default function MonthCalendar({
     photoAttempt.current = attempt;
     let cleared = false;
     setConfirmError(null);
+    setPhotoDeleteError(null);
     setPhoto({ date: day, status: "reading", message: null, values: null, cleared: false });
 
     try {
@@ -458,6 +464,36 @@ export default function MonthCalendar({
     }
   }
 
+  async function deletePhoto(day: string) {
+    if (deleteLock.current) return;
+    deleteLock.current = true;
+    setDeletingPhotoDate(day);
+    setPhotoDeleteError(null);
+
+    try {
+      const response = await fetch("/api/trainings/photo/delete", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ training_on: day }),
+      });
+      const body: unknown = await response.json().catch(() => null);
+      if (!response.ok) {
+        setPhotoDeleteError({ date: day, message: readErrorMessage(body) ?? DELETE_FAILED });
+        return;
+      }
+      photoAttempt.current += 1;
+      setPhoto((current) => (current?.date === day ? null : current));
+      setRemovedPhotoDate(day);
+      setConfirmError(null);
+      setPhotoDeleteError(null);
+    } catch {
+      setPhotoDeleteError({ date: day, message: DELETE_FAILED });
+    } finally {
+      deleteLock.current = false;
+      setDeletingPhotoDate((current) => (current === day ? null : current));
+    }
+  }
+
   async function openSquadPhoto(day: string, userId: string) {
     const attempt = coachPreviewAttempt.current + 1;
     coachPreviewAttempt.current = attempt;
@@ -514,7 +550,8 @@ export default function MonthCalendar({
   const coachCanWrite = role === "coach" && todayKnown && selected !== null && !selectedIsPast;
   const athleteCanUpload = role === "athlete" && selectedHasTraining && selected === warsawToday;
   const livePhoto = photo && selected && photo.date === selected ? photo : null;
-  const savedSubmission = submission && selected === submissionDate ? submission : null;
+  const savedSubmission =
+    submission && selected === submissionDate && selected !== removedPhotoDate ? submission : null;
   let shownSubmission: Submission | null = savedSubmission;
   if (livePhoto?.status === "ready" && livePhoto.values) {
     shownSubmission = livePhoto.values;
@@ -527,7 +564,9 @@ export default function MonthCalendar({
   }
   const photoReading = livePhoto?.status === "reading";
   const photoMessage = livePhoto?.status === "failed" ? livePhoto.message : null;
+  const deletingPhoto = deletingPhotoDate === selected;
   const photoConfirmed = shownSubmission?.confirmedAt != null;
+  const visibleDeleteError = photoDeleteError?.date === selected ? photoDeleteError.message : null;
 
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3">
@@ -778,23 +817,34 @@ export default function MonthCalendar({
             {athleteCanUpload ? (
               <div key={selected}>
                 <p className="mt-3 text-sm whitespace-pre-wrap">{selectedDescription}</p>
-                {photoConfirmed ? null : (
-                  <>
-                    <label htmlFor="training-photo" className="text-muted-foreground mt-4 mb-1 block text-sm">
-                      Zdjęcie
-                    </label>
-                    <input
-                      id="training-photo"
-                      type="file"
-                      accept="image/*"
-                      className={fileClassName}
-                      disabled={photoReading || confirming}
-                      onChange={onPhotoSelected}
-                    />
-                  </>
-                )}
+                <label htmlFor="training-photo" className="text-muted-foreground mt-4 mb-1 block text-sm">
+                  {photoConfirmed ? "Podmień zdjęcie" : "Zdjęcie"}
+                </label>
+                <input
+                  id="training-photo"
+                  type="file"
+                  accept="image/*"
+                  className={fileClassName}
+                  disabled={photoReading || confirming || deletingPhoto}
+                  onChange={onPhotoSelected}
+                />
+                {photoConfirmed ? (
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={deletingPhoto}
+                      onClick={() => {
+                        void deletePhoto(selected);
+                      }}
+                    >
+                      {deletingPhoto ? "Usuwanie…" : "Usuń zdjęcie"}
+                    </Button>
+                  </div>
+                ) : null}
                 {photoReading ? <p className="mt-3 text-sm">Odczyt trwa</p> : null}
                 {photoMessage ? <p className="text-destructive mt-3 text-sm">{photoMessage}</p> : null}
+                {visibleDeleteError ? <p className="text-destructive mt-3 text-sm">{visibleDeleteError}</p> : null}
                 {shownSubmission ? (
                   <PhotoFields
                     key={photoFieldsKey(selected, shownSubmission)}
