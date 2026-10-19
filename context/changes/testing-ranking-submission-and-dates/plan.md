@@ -224,18 +224,18 @@ Brak migracji. Dzień przyszły i dzień miniony powstają insertem service role
 
 #### Automated
 
-- [x] 1.1 `npm test` wiąże `Potwierdza` i `Wgrywa` z miejscem 1 i `5 km` z dzisiejszego potwierdzenia, stawia `Potwierdza` przed `Wgrywa`, a `Milczy` na miejscu 3 z `0 km`; imienia trenera na liście nie ma
-- [x] 1.2 `npm test` zostawia `Potwierdza` przy `5 km`, gdy istnieje przyszłe potwierdzone `100` km, i pokazuje `Wgrywa` przy `0 km` po niepotwierdzonym odczycie `6.5`
-- [x] 1.3 `npm run lint` przechodzi
+- [x] 1.1 `npm test` wiąże `Potwierdza` i `Wgrywa` z miejscem 1 i `5 km` z dzisiejszego potwierdzenia, stawia `Potwierdza` przed `Wgrywa`, a `Milczy` na miejscu 3 z `0 km`; imienia trenera na liście nie ma — aeeabf8
+- [x] 1.2 `npm test` zostawia `Potwierdza` przy `5 km`, gdy istnieje przyszłe potwierdzone `100` km, i pokazuje `Wgrywa` przy `0 km` po niepotwierdzonym odczycie `6.5` — aeeabf8
+- [x] 1.3 `npm run lint` przechodzi — aeeabf8
 
 ### Phase 2: Odrzucenie zgłoszenia
 
 #### Automated
 
-- [ ] 2.1 `npm test` dla pominiętych kilometrów, `null` i `0` zwraca 400 i zostawia `confirmed_at` puste
-- [ ] 2.2 `npm test` dla warszawskiego dziś bez treningu zwraca 400 `Tego dnia nie ma treningu.` i nie wstawia zgłoszenia
-- [ ] 2.3 `npm test` dla drugiego `begin` po potwierdzeniu zwraca 400 `To zdjęcie jest już potwierdzone.` i zostawia jeden wiersz
-- [ ] 2.4 `npm run lint` przechodzi
+- [x] 2.1 `npm test` dla pominiętych kilometrów, `null` i `0` zwraca 400 i zostawia `confirmed_at` puste
+- [x] 2.2 `npm test` dla warszawskiego dziś bez treningu zwraca 400 `Tego dnia nie ma treningu.` i nie wstawia zgłoszenia
+- [x] 2.3 `npm test` dla drugiego `begin` po potwierdzeniu zwraca 400 `To zdjęcie jest już potwierdzone.` i zostawia jeden wiersz
+- [x] 2.4 `npm run lint` przechodzi
 
 ### Phase 3: Data treningu
 
