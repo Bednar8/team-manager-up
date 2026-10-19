@@ -241,18 +241,18 @@ Brak migracji. Dzień przyszły i dzień miniony powstają insertem service role
 
 #### Automated
 
-- [x] 3.1 `npm test` dla utworzenia na `warsawYesterday()` zwraca 400 ze zdaniem o dacie i nie wstawia treningu
-- [x] 3.2 `npm test` dla drugiego utworzenia tego samego dnia zwraca 400 `Tego dnia trening już jest.` i zostawia jeden trening
-- [x] 3.3 `npm test` dla usunięcia wczorajszego treningu ze zgłoszeniem zwraca 400 i zgłoszenie zostaje
-- [x] 3.4 `npm run lint` przechodzi
+- [x] 3.1 `npm test` dla utworzenia na `warsawYesterday()` zwraca 400 ze zdaniem o dacie i nie wstawia treningu — eb4ce1f
+- [x] 3.2 `npm test` dla drugiego utworzenia tego samego dnia zwraca 400 `Tego dnia trening już jest.` i zostawia jeden trening — eb4ce1f
+- [x] 3.3 `npm test` dla usunięcia wczorajszego treningu ze zgłoszeniem zwraca 400 i zgłoszenie zostaje — eb4ce1f
+- [x] 3.4 `npm run lint` przechodzi — eb4ce1f
 
 ### Phase 4: Cookbook
 
 #### Automated
 
-- [ ] 4.1 `git diff --check` przechodzi, a §6.4 i §6.5 zawierają wyrocznię rankingu, trzy skutki zgłoszenia, trzy odrzucenia daty, remis spoza PRD i brak asercji dla usunięcia dziś ze zgłoszeniami
-- [ ] 4.2 `supabase/seed.sql` pozostaje bez danych domenowych
+- [x] 4.1 `git diff --check` przechodzi, a §6.4 i §6.5 zawierają wyrocznię rankingu, trzy skutki zgłoszenia, trzy odrzucenia daty, remis spoza PRD i brak asercji dla usunięcia dziś ze zgłoszeniami
+- [x] 4.2 `supabase/seed.sql` pozostaje bez danych domenowych
 
 #### Manual
 
-- [ ] 4.3 Czytelnik §6.5 widzi, że usunięcie dzisiejszego treningu ze zgłoszeniami nie jest oczekiwanym odrzuceniem
+- [x] 4.3 Czytelnik §6.5 widzi, że usunięcie dzisiejszego treningu ze zgłoszeniami nie jest oczekiwanym odrzuceniem

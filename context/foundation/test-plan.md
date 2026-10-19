@@ -109,10 +109,17 @@ Jak dokładać testy. Podsekcje wypełnią się, gdy wyląduje dana faza. Do teg
 - Lista oddanych: `GET /calendar?date=` z ciasteczkami trenera. Data to dzień cywilny `Europe/Warsaw`. Status siedzi w tym samym `<li>` co pełne imię. „Nie oddał” nie zawiera „Oddał”. Brak wiersza zgłoszenia to „Nie oddał”.
 - Kilometry: wiersz zgłoszenia odczytany service role po `user_id` i `training_on`. Sztuczny odczyt modelu idzie przez `record_training_readout`, zanim zawodnik potwierdzi.
 - Dzień miniony: `POST /rest/v1/trainings` i `POST /rest/v1/training_submissions` kluczem service role (`Content-Type: application/json`, `Prefer: return=representation`). Potem ta sama wyrocznia `<li>`.
+- Ranking: `GET /ranking` z ciasteczkami trenera. Miejsce, pełne imię i tekst kilometrów siedzą w jednym `<li>` (`listItemContaining`). `0 km` to brak potwierdzonego wiersza do warszawskiego dnia odczytu. Przyszłe i niepotwierdzone kilometry nie wchodzą. Remis to wspólne miejsce i polska kolejność z kodu oraz archiwum rankingu, nie z PRD.
 
 ### 6.5 Odrzucenie zgłoszenia albo treningu
 
-- TBD — patrz §3 Faza 2: brak kilometrów, dzień bez treningu, drugie zdjęcie, data wsteczna, drugi trening tego dnia, usunięcie treningu ze zgłoszeniami.
+- Puste kilometry (pominięte `distance_km`, `null` albo `0`) po `begin` zwracają 400 i zostawiają niepotwierdzony wiersz. Wgranie nie jest wymagane.
+- Brak treningu na warszawskie dziś: `confirm` zwraca 400 `Tego dnia nie ma treningu.` i nic nie wstawia.
+- Drugie `begin` po potwierdzeniu zwraca 400 `To zdjęcie jest już potwierdzone.` i nie wstawia drugiego wiersza. Zostaje jeden wiersz, z tym samym `confirmed_at`.
+- Utworzenie na `warsawYesterday()` zwraca 400 `Trening można dodać, zmienić albo usunąć tylko na dziś lub później.` i nie wstawia treningu.
+- Drugie utworzenie tego samego dnia zwraca 400 `Tego dnia trening już jest.` i zostawia jeden trening.
+- Usunięcie wczorajszego treningu ze zgłoszeniem zwraca 400 z tym samym zdaniem o dacie, a zgłoszenie zostaje.
+- Usunięcie dziś lub później ze zgłoszeniami nie ma asercji. Kod kasuje je kaskadą, a FR-002 dla dziś jest niespełnione. To nie jest oczekiwane 200 ani oczekiwane 400.
 
 ### 6.6 Notatki z faz
 
