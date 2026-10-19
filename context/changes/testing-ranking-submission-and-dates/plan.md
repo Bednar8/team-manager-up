@@ -232,19 +232,19 @@ Brak migracji. Dzień przyszły i dzień miniony powstają insertem service role
 
 #### Automated
 
-- [x] 2.1 `npm test` dla pominiętych kilometrów, `null` i `0` zwraca 400 i zostawia `confirmed_at` puste
-- [x] 2.2 `npm test` dla warszawskiego dziś bez treningu zwraca 400 `Tego dnia nie ma treningu.` i nie wstawia zgłoszenia
-- [x] 2.3 `npm test` dla drugiego `begin` po potwierdzeniu zwraca 400 `To zdjęcie jest już potwierdzone.` i zostawia jeden wiersz
-- [x] 2.4 `npm run lint` przechodzi
+- [x] 2.1 `npm test` dla pominiętych kilometrów, `null` i `0` zwraca 400 i zostawia `confirmed_at` puste — 0189612
+- [x] 2.2 `npm test` dla warszawskiego dziś bez treningu zwraca 400 `Tego dnia nie ma treningu.` i nie wstawia zgłoszenia — 0189612
+- [x] 2.3 `npm test` dla drugiego `begin` po potwierdzeniu zwraca 400 `To zdjęcie jest już potwierdzone.` i zostawia jeden wiersz — 0189612
+- [x] 2.4 `npm run lint` przechodzi — 0189612
 
 ### Phase 3: Data treningu
 
 #### Automated
 
-- [ ] 3.1 `npm test` dla utworzenia na `warsawYesterday()` zwraca 400 ze zdaniem o dacie i nie wstawia treningu
-- [ ] 3.2 `npm test` dla drugiego utworzenia tego samego dnia zwraca 400 `Tego dnia trening już jest.` i zostawia jeden trening
-- [ ] 3.3 `npm test` dla usunięcia wczorajszego treningu ze zgłoszeniem zwraca 400 i zgłoszenie zostaje
-- [ ] 3.4 `npm run lint` przechodzi
+- [x] 3.1 `npm test` dla utworzenia na `warsawYesterday()` zwraca 400 ze zdaniem o dacie i nie wstawia treningu
+- [x] 3.2 `npm test` dla drugiego utworzenia tego samego dnia zwraca 400 `Tego dnia trening już jest.` i zostawia jeden trening
+- [x] 3.3 `npm test` dla usunięcia wczorajszego treningu ze zgłoszeniem zwraca 400 i zgłoszenie zostaje
+- [x] 3.4 `npm run lint` przechodzi
 
 ### Phase 4: Cookbook
 
