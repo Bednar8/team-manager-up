@@ -1,6 +1,8 @@
 ---
 import TeamShell from "@/layouts/TeamShell.astro";
+import TrophyIcon from "@/components/ranking/TrophyIcon.astro";
 import { createClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 const { user } = Astro.locals;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
@@ -38,6 +40,15 @@ const ranking = readRanking(rankingResult.data as unknown).sort(
     a.displayName.localeCompare(b.displayName, "pl") ||
     compareId(a.userId, b.userId),
 );
+const hasStandings = ranking.some((row) => row.totalKm > 0);
+
+function rowMarks(row: { userId: string; totalKm: number; place: number }) {
+  return {
+    featured: row.place === 1 && row.totalKm > 0,
+    showTrophy: hasStandings && row.place <= 3,
+    isSelf: row.userId === currentUserId,
+  };
+}
 
 function compareKm(left: number, right: number): number {
   if (left === right) {
@@ -121,25 +132,65 @@ function readRanking(rows: unknown): { userId: string; displayName: string; tota
   <main class="flex-1 px-4 py-8">
     <div class="mx-auto w-full max-w-md">
       <h1 class="text-3xl font-semibold">Ranking</h1>
+      <p class="text-muted-foreground mt-2 text-sm">Suma potwierdzonych kilometrów.</p>
       {ranking.length === 0 ? (
-        <p class="mt-6 text-sm text-muted-foreground">W składzie nie ma zawodników.</p>
+        <p class="text-muted-foreground mt-6 rounded-lg border bg-card px-4 py-6 text-sm">
+          W składzie nie ma zawodników.
+        </p>
       ) : (
-        <ul class="mt-6 space-y-2">
-          {ranking.map((row) =>
-            row.userId === currentUserId ? (
-              <li class="rounded-md bg-accent px-4 py-3">
-                <p class="text-sm text-accent-foreground">{row.place}</p>
-                <p class="font-semibold">{row.displayName}</p>
-                <p class="text-sm text-accent-foreground">{formatKm(row.totalKm)}</p>
+        <ul class="mt-6 flex flex-col gap-2" aria-label="Ranking kilometrów">
+          {ranking.map((row) => {
+            const { featured, showTrophy, isSelf } = rowMarks(row);
+            return (
+              <li
+                class:list={cn(
+                  "flex items-center gap-3 rounded-lg border bg-card px-4 py-3",
+                  featured && "border-primary bg-accent rounded-xl px-4 py-5",
+                  !featured && isSelf && "border-primary/30 bg-accent",
+                )}
+              >
+                <div class="shrink-0">
+                  {showTrophy ? (
+                    <span
+                      class:list={cn(
+                        "inline-flex items-center rounded-full",
+                        featured && "bg-primary text-primary-foreground gap-2 py-2 pr-4 pl-3",
+                        row.place === 2 && "bg-secondary text-secondary-foreground gap-1.5 py-1.5 pr-3 pl-2.5",
+                        row.place === 3 && "bg-muted text-muted-foreground gap-1.5 border py-1.5 pr-2.5 pl-2",
+                      )}
+                    >
+                      <TrophyIcon class:list={[featured ? "size-8" : row.place === 2 ? "size-6" : "size-5"]} />
+                      <p class:list={cn("leading-none font-semibold tabular-nums", featured ? "text-lg" : "text-sm")}>
+                        {row.place}
+                      </p>
+                    </span>
+                  ) : (
+                    <p class="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-full text-sm font-semibold tabular-nums">
+                      {row.place}
+                    </p>
+                  )}
+                </div>
+                <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                  <p class:list={cn("min-w-0 break-words", featured ? "text-xl font-semibold" : "font-medium")}>
+                    {row.displayName}
+                  </p>
+                  {isSelf && (
+                    <span class="bg-primary text-primary-foreground shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold">
+                      Ty
+                    </span>
+                  )}
+                </div>
+                <p
+                  class:list={cn(
+                    "shrink-0 text-right whitespace-nowrap tabular-nums",
+                    featured ? "text-primary text-lg font-semibold" : "text-muted-foreground text-sm",
+                  )}
+                >
+                  {formatKm(row.totalKm)}
+                </p>
               </li>
-            ) : (
-              <li class="rounded-md px-4 py-3">
-                <p class="text-sm text-muted-foreground">{row.place}</p>
-                <p class="font-medium">{row.displayName}</p>
-                <p class="text-sm text-muted-foreground">{formatKm(row.totalKm)}</p>
-              </li>
-            ),
-          )}
+            );
+          })}
         </ul>
       )}
     </div>
