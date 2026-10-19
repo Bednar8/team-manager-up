@@ -1,7 +1,7 @@
 ---
 change_id: testing-ranking-submission-and-dates
 title: Ranking i reguły zgłoszenia oraz daty
-status: implementing
+status: implemented
 created: 2026-10-19
 updated: 2026-10-19
 archived_at: null

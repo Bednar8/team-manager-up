@@ -250,9 +250,9 @@ Brak migracji. Dzień przyszły i dzień miniony powstają insertem service role
 
 #### Automated
 
-- [x] 4.1 `git diff --check` przechodzi, a §6.4 i §6.5 zawierają wyrocznię rankingu, trzy skutki zgłoszenia, trzy odrzucenia daty, remis spoza PRD i brak asercji dla usunięcia dziś ze zgłoszeniami
-- [x] 4.2 `supabase/seed.sql` pozostaje bez danych domenowych
+- [x] 4.1 `git diff --check` przechodzi, a §6.4 i §6.5 zawierają wyrocznię rankingu, trzy skutki zgłoszenia, trzy odrzucenia daty, remis spoza PRD i brak asercji dla usunięcia dziś ze zgłoszeniami — e790d31
+- [x] 4.2 `supabase/seed.sql` pozostaje bez danych domenowych — e790d31
 
 #### Manual
 
-- [x] 4.3 Czytelnik §6.5 widzi, że usunięcie dzisiejszego treningu ze zgłoszeniami nie jest oczekiwanym odrzuceniem
+- [x] 4.3 Czytelnik §6.5 widzi, że usunięcie dzisiejszego treningu ze zgłoszeniami nie jest oczekiwanym odrzuceniem — e790d31
