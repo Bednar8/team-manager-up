@@ -1,10 +1,10 @@
 ---
 change_id: preserve-local-test-data
 title: Ochrona lokalnych danych i sprzątanie zasobów testowych
-status: implemented
+status: archived
 created: 2026-10-15
-updated: 2026-10-15
-archived_at: null
+updated: 2026-10-19
+archived_at: 2026-10-19T07:44:19Z
 ---
 
 ## Notes
