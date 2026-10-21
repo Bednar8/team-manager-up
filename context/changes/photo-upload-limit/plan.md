@@ -216,11 +216,11 @@ Istniejące zgłoszenia zostają. Brak wiersza w `photo_readout_uses` znaczy zer
 
 #### Automated
 
-- [x] 2.1 `npm test` sprawdza HTML kalendarza: licznik 2 i potwierdzone zdjęcie dają zdanie limitu oraz `Usuń zdjęcie` bez `id="training-photo"`; licznik 0 zostawia etykietę pliku; licznik 2 i niepotwierdzone zgłoszenie zostawiają `Potwierdź`
-- [x] 2.2 `npm run lint` przechodzi
+- [x] 2.1 `npm test` sprawdza HTML kalendarza: licznik 2 i potwierdzone zdjęcie dają zdanie limitu oraz `Usuń zdjęcie` bez `id="training-photo"`; licznik 0 zostawia etykietę pliku; licznik 2 i niepotwierdzone zgłoszenie zostawiają `Potwierdź` — 0679623
+- [x] 2.2 `npm run lint` przechodzi — 0679623
 
 #### Manual
 
-- [x] 2.3 Po dwóch odczytach dzisiejszego treningu pole pliku znika, widać zdanie limitu, a `Potwierdź` zapisuje liczby ostatniego zdjęcia
-- [x] 2.4 `Usuń zdjęcie` potwierdzonego zdjęcia usuwa je, a pole pliku zostaje schowane do końca warszawskiego dnia
-- [x] 2.5 Plik odrzucony przed wywołaniem OpenRouter nie podnosi licznika i pole pliku zostaje
+- [x] 2.3 Po dwóch odczytach dzisiejszego treningu pole pliku znika, widać zdanie limitu, a `Potwierdź` zapisuje liczby ostatniego zdjęcia — 0679623
+- [x] 2.4 `Usuń zdjęcie` potwierdzonego zdjęcia usuwa je, a pole pliku zostaje schowane do końca warszawskiego dnia — 0679623
+- [x] 2.5 Plik odrzucony przed wywołaniem OpenRouter nie podnosi licznika i pole pliku zostaje — 0679623
