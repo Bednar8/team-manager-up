@@ -6,9 +6,10 @@ import { missingConfigs } from "@/lib/config-status";
 
 interface Props {
   title?: string;
+  showAccent?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, showAccent = true } = Astro.props;
 const documentTitle = title ? `${title} · Team Manager` : "Team Manager";
 const { user } = Astro.locals;
 const pathname = Astro.url.pathname;
@@ -75,7 +76,7 @@ const onApp =
         )}
       </div>
     </header>
-    <div class="h-1.5 bg-accent" aria-hidden="true"></div>
+    {showAccent && <div class="h-1.5 bg-accent" aria-hidden="true"></div>}
     <div class="flex flex-1 flex-col">
       <slot />
     </div>
