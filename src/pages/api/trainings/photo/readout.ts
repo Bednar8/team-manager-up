@@ -37,6 +37,13 @@ export const POST: APIRoute = async (context) => {
     return jsonResponse({ error: "Nieprawidłowa data." }, 400);
   }
 
+  const day = await supabase.rpc("assert_photo_readout_day", {
+    training_on: trainingOn,
+  });
+  if (day.error) {
+    return jsonResponse({ error: day.error.message }, 400);
+  }
+
   const submission = await loadOwnSubmission(supabase, user.id, trainingOn);
   if ("error" in submission) {
     return jsonResponse({ error: READOUT_FAILED }, 400);
@@ -57,9 +64,18 @@ export const POST: APIRoute = async (context) => {
     return jsonResponse({ error: READOUT_FAILED }, 502);
   }
 
+  const reserved = await supabase.rpc("reserve_photo_readout");
+  if (reserved.error) {
+    return jsonResponse({ error: reserved.error.message }, 400);
+  }
+  const readoutsUsed = readUsedCount(reserved.data);
+  if (readoutsUsed === null) {
+    return jsonResponse({ error: READOUT_FAILED }, 500);
+  }
+
   const readout = await readWorkoutPhoto(imageUrl);
   if (!readout) {
-    return jsonResponse({ error: READOUT_FAILED }, 502);
+    return jsonResponse({ error: READOUT_FAILED, readoutsUsed }, 502);
   }
 
   const { error: recordError } = await service.rpc("record_training_readout", {
@@ -70,7 +86,7 @@ export const POST: APIRoute = async (context) => {
     max_speed_kmh: readout.maxSpeedKmh,
   });
   if (recordError) {
-    return jsonResponse({ error: READOUT_FAILED }, 502);
+    return jsonResponse({ error: READOUT_FAILED, readoutsUsed }, 502);
   }
 
   return jsonResponse({
@@ -82,6 +98,7 @@ export const POST: APIRoute = async (context) => {
     modelMaxSpeedKmh: readout.maxSpeedKmh,
     athleteEdited: false,
     confirmedAt: null,
+    readoutsUsed,
   });
 };
 
@@ -157,6 +174,13 @@ function readString(row: unknown, key: string): string | null {
   }
   const value: unknown = Object.getOwnPropertyDescriptor(row, key)?.value;
   return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function readUsedCount(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    return null;
+  }
+  return value;
 }
 
 function readNullableString(row: unknown, key: string): string | null | undefined {

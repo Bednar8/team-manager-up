@@ -29,3 +29,6 @@ pnpm-debug.log*
 
 # Local test resource ownership (no secrets)
 .test-runs/
+
+.agents
+.cursor
