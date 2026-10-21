@@ -67,6 +67,7 @@ interface Props {
   initialDate?: string;
   success?: { date: string; message: string };
   warsawToday: string;
+  photoReadoutsUsed: number;
   role: "coach" | "athlete";
   trainings: Training[];
   athletes: SquadAthlete[];
@@ -85,6 +86,7 @@ const fieldClassName =
 const fileClassName =
   "text-foreground w-full max-w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground";
 
+const PHOTO_LIMIT = "Dziś można wgrać najwyżej dwa zdjęcia.";
 const READOUT_FAILED = "Nie udało się odczytać zdjęcia. Wpisz dane albo wgraj inne.";
 const UPLOAD_FAILED = "Nie udało się wgrać zdjęcia.";
 const CONFIRM_FAILED = "Nie udało się potwierdzić.";
@@ -128,6 +130,7 @@ export default function MonthCalendar({
   initialDate,
   success,
   warsawToday,
+  photoReadoutsUsed: initialPhotoReadoutsUsed,
   role,
   trainings,
   athletes,
@@ -153,6 +156,7 @@ export default function MonthCalendar({
   );
   const [notice, setNotice] = useState<string | null>(() => error ?? null);
   const [photo, setPhoto] = useState<PhotoAttempt | null>(null);
+  const [photoReadoutsUsed, setPhotoReadoutsUsed] = useState(initialPhotoReadoutsUsed);
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [deletingPhotoDate, setDeletingPhotoDate] = useState<string | null>(null);
@@ -330,6 +334,12 @@ export default function MonthCalendar({
     if (lastDayRef.current) document.getElementById(`day-${lastDayRef.current}`)?.focus();
   }, [selected]);
 
+  function raisePhotoReadouts(body: unknown) {
+    const next = raisedPhotoReadoutCount(body);
+    if (next === null) return;
+    setPhotoReadoutsUsed((current) => (next > current ? next : current));
+  }
+
   function onPhotoSelected(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.item(0) ?? null;
     event.currentTarget.value = "";
@@ -352,6 +362,7 @@ export default function MonthCalendar({
         body: JSON.stringify({ training_on: day }),
       });
       const beginBody: unknown = await beginResponse.json().catch(() => null);
+      raisePhotoReadouts(beginBody);
       if (photoAttempt.current !== attempt) return;
       if (!beginResponse.ok) {
         setPhoto({
@@ -384,6 +395,7 @@ export default function MonthCalendar({
         body: JSON.stringify({ training_on: day }),
       });
       const readoutBody: unknown = await readoutResponse.json().catch(() => null);
+      raisePhotoReadouts(readoutBody);
       if (photoAttempt.current !== attempt) return;
       if (readoutResponse.status === 503) {
         setPhoto({
@@ -817,17 +829,23 @@ export default function MonthCalendar({
             {athleteCanUpload ? (
               <div key={selected}>
                 <p className="mt-3 text-sm whitespace-pre-wrap">{selectedDescription}</p>
-                <label htmlFor="training-photo" className="text-muted-foreground mt-4 mb-1 block text-sm">
-                  {photoConfirmed ? "Podmień zdjęcie" : "Zdjęcie"}
-                </label>
-                <input
-                  id="training-photo"
-                  type="file"
-                  accept="image/*"
-                  className={fileClassName}
-                  disabled={photoReading || confirming || deletingPhoto}
-                  onChange={onPhotoSelected}
-                />
+                {photoReadoutsUsed >= 2 ? (
+                  <p className="text-muted-foreground mt-4 mb-1 text-sm">{PHOTO_LIMIT}</p>
+                ) : (
+                  <>
+                    <label htmlFor="training-photo" className="text-muted-foreground mt-4 mb-1 block text-sm">
+                      {photoConfirmed ? "Podmień zdjęcie" : "Zdjęcie"}
+                    </label>
+                    <input
+                      id="training-photo"
+                      type="file"
+                      accept="image/*"
+                      className={fileClassName}
+                      disabled={photoReading || confirming || deletingPhoto}
+                      onChange={onPhotoSelected}
+                    />
+                  </>
+                )}
                 {photoConfirmed ? (
                   <div className="mt-2 flex justify-end">
                     <Button
@@ -1201,6 +1219,28 @@ function readCleared(value: unknown): boolean {
     return false;
   }
   return Object.getOwnPropertyDescriptor(value, "cleared")?.value === true;
+}
+
+function raisedPhotoReadoutCount(body: unknown): number | null {
+  const count = readReadoutsUsed(body);
+  if (count !== null && count >= 2) {
+    return count;
+  }
+  if (readErrorMessage(body) === PHOTO_LIMIT) {
+    return 2;
+  }
+  return null;
+}
+
+function readReadoutsUsed(value: unknown): number | null {
+  if (typeof value !== "object" || value === null || !Object.hasOwn(value, "readoutsUsed")) {
+    return null;
+  }
+  const count: unknown = Object.getOwnPropertyDescriptor(value, "readoutsUsed")?.value;
+  if (typeof count !== "number" || !Number.isInteger(count)) {
+    return null;
+  }
+  return count;
 }
 
 function readErrorMessage(value: unknown): string | null {

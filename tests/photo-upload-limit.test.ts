@@ -233,6 +233,111 @@ test(
   TEST_TIMEOUT_MS,
 );
 
+test(
+  "calendar at two readouts shows the limit and delete on a confirmed photo",
+  () =>
+    withTeamFixture(async (team, run) => {
+      const today = warsawToday();
+      const confirmingName = `Potwierdza ${team.runId}`;
+      const confirmingUser = team.athletes[0];
+
+      expect(team.athletes.map((athlete) => athlete.displayName)).toEqual([
+        confirmingName,
+        `Wgrywa ${team.runId}`,
+        `Milczy ${team.runId}`,
+      ]);
+
+      await createTraining(team.coach.jar, today, "Bieg na dziś");
+      const confirming = requireMember(await findTeamMemberByDisplayName(confirmingName), confirmingName);
+      const upload = await beginTrainingPhoto(confirmingUser.jar, today);
+      await uploadTrainingPhoto(upload);
+      await confirmTrainingPhoto(confirmingUser.jar, {
+        trainingOn: today,
+        distanceKm: 5,
+        durationSeconds: null,
+        maxSpeedKmh: null,
+      });
+      await seedPhotoReadoutUses(run, confirming.userId, today);
+      expect(await readPhotoReadoutCount(run, confirming.userId, today)).toBe(2);
+
+      const calendar = await request(confirmingUser.jar, `/calendar?date=${today}`);
+      expect(calendar.status).toBe(200);
+      expect(calendar.body).toContain("Bieg na dziś");
+      expect(calendar.body).toContain(LIMIT);
+      expect(calendar.body).toContain("Usuń zdjęcie");
+      expect(calendar.body).not.toContain('id="training-photo"');
+      expect(calendar.body).not.toContain("Podmień zdjęcie");
+      expect(calendar.body).not.toContain("Zdjęcie");
+      expect(calendar.body).not.toContain("Potwierdź");
+    }),
+  TEST_TIMEOUT_MS,
+);
+
+test(
+  "calendar at zero readouts shows the file label",
+  () =>
+    withTeamFixture(async (team, run) => {
+      const today = warsawToday();
+      const confirmingName = `Potwierdza ${team.runId}`;
+      const confirmingUser = team.athletes[0];
+
+      expect(team.athletes.map((athlete) => athlete.displayName)).toEqual([
+        confirmingName,
+        `Wgrywa ${team.runId}`,
+        `Milczy ${team.runId}`,
+      ]);
+
+      await createTraining(team.coach.jar, today, "Bieg na dziś");
+      const confirming = requireMember(await findTeamMemberByDisplayName(confirmingName), confirmingName);
+      expect(await readPhotoReadoutCount(run, confirming.userId, today)).toBeNull();
+
+      const calendar = await request(confirmingUser.jar, `/calendar?date=${today}`);
+      expect(calendar.status).toBe(200);
+      expect(calendar.body).toContain("Bieg na dziś");
+      expect(calendar.body).toContain("Zdjęcie");
+      expect(calendar.body).toContain('id="training-photo"');
+      expect(calendar.body).not.toContain(LIMIT);
+    }),
+  TEST_TIMEOUT_MS,
+);
+
+test(
+  "calendar at two readouts keeps confirm on an unconfirmed submission",
+  () =>
+    withTeamFixture(async (team, run) => {
+      const today = warsawToday();
+      const confirmingName = `Potwierdza ${team.runId}`;
+      const confirmingUser = team.athletes[0];
+
+      expect(team.athletes.map((athlete) => athlete.displayName)).toEqual([
+        confirmingName,
+        `Wgrywa ${team.runId}`,
+        `Milczy ${team.runId}`,
+      ]);
+
+      await createTraining(team.coach.jar, today, "Bieg na dziś");
+      const confirming = requireMember(await findTeamMemberByDisplayName(confirmingName), confirmingName);
+      const upload = await beginTrainingPhoto(confirmingUser.jar, today);
+      await uploadTrainingPhoto(upload);
+      const started = requireSubmission(await readTrainingSubmission(confirming.userId, today), confirmingName);
+      expect(started.confirmedAt).toBeNull();
+      expect(started.trainingOn).toBe(today);
+
+      await seedPhotoReadoutUses(run, confirming.userId, today);
+      expect(await readPhotoReadoutCount(run, confirming.userId, today)).toBe(2);
+
+      const calendar = await request(confirmingUser.jar, `/calendar?date=${today}`);
+      expect(calendar.status).toBe(200);
+      expect(calendar.body).toContain("Bieg na dziś");
+      expect(calendar.body).toContain(LIMIT);
+      expect(calendar.body).toContain("Potwierdź");
+      expect(calendar.body).not.toContain('id="training-photo"');
+      expect(calendar.body).not.toContain("Zdjęcie");
+      expect(calendar.body).not.toContain("Usuń zdjęcie");
+    }),
+  TEST_TIMEOUT_MS,
+);
+
 function expectError(response: HttpResponse, error: string): void {
   expect(response.status).toBe(400);
   expect(JSON.parse(response.body) as unknown).toEqual({ error });

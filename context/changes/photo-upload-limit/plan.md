@@ -206,21 +206,21 @@ Istniejące zgłoszenia zostają. Brak wiersza w `photo_readout_uses` znaczy zer
 
 #### Automated
 
-- [x] 1.1 `npx supabase migration up` nakłada `20261021194500_photo_readout_limit.sql` i zostawia istniejące wiersze lokalnej bazy
-- [x] 1.2 `npm test` dla limitu: przy `used_count` 2 `POST /api/trainings/photo/begin` zwraca 400 `Dziś można wgrać najwyżej dwa zdjęcia.` i nie zmienia potwierdzonego zgłoszenia, a `POST /api/trainings/photo/readout` przy istniejącym obiekcie zwraca ten sam 400 zamiast 502 `Nie udało się odczytać zdjęcia. Wpisz dane albo wgraj inne.`
-- [x] 1.3 `npm test` dla wczorajszego `training_on` bez obiektu: `POST /api/trainings/photo/readout` zwraca 400 `Zdjęcie można wgrać tylko w dniu treningu.`
-- [x] 1.4 `npm test` po `Usuń zdjęcie` oraz po skasowaniu i ponownym utworzeniu dzisiejszego treningu: `used_count` zostaje 2 i kolejny begin zwraca zdanie limitu
-- [x] 1.5 `npm run lint` przechodzi
+- [x] 1.1 `npx supabase migration up` nakłada `20261021194500_photo_readout_limit.sql` i zostawia istniejące wiersze lokalnej bazy — dc240af
+- [x] 1.2 `npm test` dla limitu: przy `used_count` 2 `POST /api/trainings/photo/begin` zwraca 400 `Dziś można wgrać najwyżej dwa zdjęcia.` i nie zmienia potwierdzonego zgłoszenia, a `POST /api/trainings/photo/readout` przy istniejącym obiekcie zwraca ten sam 400 zamiast 502 `Nie udało się odczytać zdjęcia. Wpisz dane albo wgraj inne.` — dc240af
+- [x] 1.3 `npm test` dla wczorajszego `training_on` bez obiektu: `POST /api/trainings/photo/readout` zwraca 400 `Zdjęcie można wgrać tylko w dniu treningu.` — dc240af
+- [x] 1.4 `npm test` po `Usuń zdjęcie` oraz po skasowaniu i ponownym utworzeniu dzisiejszego treningu: `used_count` zostaje 2 i kolejny begin zwraca zdanie limitu — dc240af
+- [x] 1.5 `npm run lint` przechodzi — dc240af
 
 ### Phase 2: Kalendarz bez trzeciego pliku
 
 #### Automated
 
-- [ ] 2.1 `npm test` sprawdza HTML kalendarza: licznik 2 i potwierdzone zdjęcie dają zdanie limitu oraz `Usuń zdjęcie` bez `id="training-photo"`; licznik 0 zostawia etykietę pliku; licznik 2 i niepotwierdzone zgłoszenie zostawiają `Potwierdź`
-- [ ] 2.2 `npm run lint` przechodzi
+- [x] 2.1 `npm test` sprawdza HTML kalendarza: licznik 2 i potwierdzone zdjęcie dają zdanie limitu oraz `Usuń zdjęcie` bez `id="training-photo"`; licznik 0 zostawia etykietę pliku; licznik 2 i niepotwierdzone zgłoszenie zostawiają `Potwierdź`
+- [x] 2.2 `npm run lint` przechodzi
 
 #### Manual
 
-- [ ] 2.3 Po dwóch odczytach dzisiejszego treningu pole pliku znika, widać zdanie limitu, a `Potwierdź` zapisuje liczby ostatniego zdjęcia
-- [ ] 2.4 `Usuń zdjęcie` potwierdzonego zdjęcia usuwa je, a pole pliku zostaje schowane do końca warszawskiego dnia
-- [ ] 2.5 Plik odrzucony przed wywołaniem OpenRouter nie podnosi licznika i pole pliku zostaje
+- [x] 2.3 Po dwóch odczytach dzisiejszego treningu pole pliku znika, widać zdanie limitu, a `Potwierdź` zapisuje liczby ostatniego zdjęcia
+- [x] 2.4 `Usuń zdjęcie` potwierdzonego zdjęcia usuwa je, a pole pliku zostaje schowane do końca warszawskiego dnia
+- [x] 2.5 Plik odrzucony przed wywołaniem OpenRouter nie podnosi licznika i pole pliku zostaje
